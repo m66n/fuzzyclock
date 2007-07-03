@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FuzzyClock", "FuzzyClock.vcproj", "{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A8B86777-0442-454E-9DDC-D28FADBDF911} = {A8B86777-0442-454E-9DDC-D28FADBDF911}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FuzzyHook", "FuzzyHook\FuzzyHook.vcproj", "{A8B86777-0442-454E-9DDC-D28FADBDF911}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Debug|Win32.Build.0 = Debug|Win32
+		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Release|Win32.ActiveCfg = Release|Win32
+		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Release|Win32.Build.0 = Release|Win32
+		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Debug|Win32.Build.0 = Debug|Win32
+		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Release|Win32.ActiveCfg = Release|Win32
+		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
