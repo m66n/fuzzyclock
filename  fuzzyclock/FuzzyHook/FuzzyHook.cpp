@@ -23,7 +23,7 @@
 #include "stdafx.h"
 #include "FuzzyHook.h"
 #include <string>
-
+#include <stdio.h>
 
 #ifdef _UNICODE
 #define tstring std::wstring
@@ -84,11 +84,15 @@ LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
 void RefreshTaskbar(HWND hwndClock);
 tstring TimeString();
 
+// debugging
+//
+void WriteLog( LPCTSTR lpszDebugOut, ... );
+
+
 
 BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-					 )
+                       DWORD   ul_reason_for_call,
+                       LPVOID  lpReserved )
 {
    if ( DLL_PROCESS_ATTACH == ul_reason_for_call )
    {
@@ -124,7 +128,7 @@ FUZZYHOOK_API BOOL Hook( HWND hWnd )
 
 FUZZYHOOK_API BOOL Unhook()
 {
-   g_hHook = SetWindowsHookEx( WH_CALLWNDPROC,(HOOKPROC)HookProc, g_hInst, GetWindowThreadProcessId( g_hWnd, NULL ) );
+   g_hHook = SetWindowsHookEx( WH_CALLWNDPROC, (HOOKPROC)HookProc, g_hInst, GetWindowThreadProcessId( g_hWnd, NULL ) );
 
    if ( NULL != g_hHook )
    {
@@ -150,20 +154,31 @@ LRESULT HookProc( int code, WPARAM wParam, LPARAM lParam )
             TCHAR dllPath[MAX_PATH+1];
             GetModuleFileName( g_hInst, dllPath, MAX_PATH+1 );
 
+            WriteLog( _T("GetModuleFileName(): %s\r\n"), dllPath );
+
             if ( LoadLibrary( dllPath ) )
             {
                g_wndProcOld = (WNDPROC)(intptr_t)SetWindowLong( g_hWnd, GWL_WNDPROC, (long)(intptr_t)NewWndProc );
 
+               WriteLog( _T("SetWindowLong() returns %x.  NewWndProc is %x.\r\n"), g_wndProcOld, NewWndProc );
+
                if ( NULL == g_wndProcOld )
                {
+                  WriteLog( _T("SetWindowLong() failed: %d\r\n"), GetLastError() );
                   FreeLibrary( g_hInst );
                }
                else
                {
+                  WriteLog( _T("SetWindowLong() successful.\r\n") );
                   g_subclassed = TRUE;
                   Initialize();
                   InvalidateRect( g_hWnd, NULL, TRUE );
+                  WriteLog( _T("InvalidateRect( %x, NULL, TRUE )\r\n"), g_hWnd );
                }
+            }
+            else
+            {
+               WriteLog( _T("LoadLibrary() failed: %d\r\n"), GetLastError() );
             }
          }
       }
@@ -188,6 +203,15 @@ LRESULT HookProc( int code, WPARAM wParam, LPARAM lParam )
 
 LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
+   if ( message == RWM_FUZZYHOOK )
+   {
+      WriteLog( _T("NewWndProc( %x, RWM_FUZZYHOOK, %x, %x)\r\n"), hWnd, wParam, lParam );
+   }
+   else
+   {
+      WriteLog( _T("NewWndProc( %x, %x, %x, %x)\r\n"), hWnd, message, wParam, lParam );
+   }
+
    switch ( message )
    {
    case WM_PAINT:
@@ -224,9 +248,21 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
    case WM_SETFOCUS:
    case WM_KILLFOCUS:
    case WM_TIMER:
+
       InvalidateRect( hWnd, NULL, FALSE );
       return 0;
+
+   case WM_RBUTTONUP:
+
+      WriteLog( _T("WM_RBUTTONUP\r\n") );
+      break;
+
+   case WM_NCHITTEST:
+
+      return DefWindowProc( hWnd, message, wParam, lParam );
    }
+
+   WriteLog( _T("CallWindowProc( %x, %x, %x, %x, %x )\r\n"), g_wndProcOld, hWnd, message, wParam, lParam );
 
    return CallWindowProc( g_wndProcOld, hWnd, message, wParam, lParam );
 }
@@ -297,6 +333,7 @@ LRESULT CalculateWindowSize( HWND hwnd )
    }
 
    hdc = GetDC( hwnd );
+
    if ( g_hFont )
    {
       hOldFont = (HFONT)SelectObject( hdc, g_hFont );
@@ -315,6 +352,7 @@ LRESULT CalculateWindowSize( HWND hwnd )
 
    wclock += tm.tmAveCharWidth * 2;
    hclock += ( tm.tmHeight - tm.tmInternalLeading ) / 2;
+
    if ( hclock < 4 )
    {
       hclock = 4;
@@ -363,28 +401,9 @@ void DrawFuzzyClock( HWND hWnd, HDC hDC )
    GetTextSize( g_hdcClock, timeString.c_str(), textMetric, sizeText );
 
    int x = rc.right / 2;;
-   int y = (rc.bottom - sizeText.cy)/2 - textMetric.tmInternalLeading/2;
+   int y = ( rc.bottom - sizeText.cy ) / 2 - textMetric.tmInternalLeading / 2;
 
-   const TCHAR* pChar = timeString.c_str();
-
-   const TCHAR* pStart = NULL;
-   const TCHAR* pEnd = NULL;
-
-   while ( *pChar )
-   {
-      pStart = pChar;
-
-      while(*pChar && *pChar != 0x0d) pChar++;
-      pEnd = pChar;
-      if(*pChar == 0x0d) pChar += 2;
-
-      TextOut( g_hdcClock, x, y, pStart, (int)(pEnd - pStart) );
-
-      if ( *pChar )
-      {
-         y += textMetric.tmHeight - textMetric.tmInternalLeading + 2;
-      }
-   }
+   TextOut( g_hdcClock, x, y, timeString.c_str(), (int)timeString.size() );
 
    BitBlt( hDC, 0, 0, rc.right, rc.bottom, g_hdcClock, 0, 0, SRCCOPY );
 
@@ -581,50 +600,12 @@ void GetTextSize( HDC hDC, LPCTSTR szText, TEXTMETRIC& textMetric, SIZE& size )
 
    int heightFont = textMetric.tmHeight - textMetric.tmInternalLeading;
 
-   const TCHAR* pChar = szText;
-
-   const TCHAR* pStart = NULL;
-   const TCHAR* pEnd = NULL;
-
-   int width = 0;
-   int height = 0;
-
-   while ( *pChar )
+   if ( GetTextExtentPoint32( hDC, szText, (int)_tcslen( szText ), &size ) == 0 )
    {
-      pStart = pChar;
-
-      while ( *pChar && *pChar != 0x0d )
-      {
-         pChar++;
-      }
-
-      pEnd = pChar;
-
-      if ( *pChar == 0x0d )
-      {
-         pChar += 2;
-      }
-
-      if ( GetTextExtentPoint32( hDC, pStart, (int)(pEnd - pStart), &size ) == 0 )
-      {
-         size.cx = (int)(pEnd - pStart) * textMetric.tmAveCharWidth;
-      }
-
-      if ( width < size.cx )
-      {
-         width = size.cx;
-      }
-
-      height += heightFont;
-
-      if ( *pChar )
-      {
-         height += 2;
-      }
+      size.cx = (int)_tcslen( szText ) * textMetric.tmAveCharWidth;
    }
 
-   size.cx = width;
-   size.cy = height;
+   size.cy = heightFont;
 }
 
 
@@ -640,6 +621,8 @@ void RefreshTaskbar( HWND hwndClock )
 
    InvalidateRect( hwndTaskbar, NULL, TRUE );
    PostMessage( hwndTaskbar, WM_SIZE, SIZE_RESTORED, 0 );
+
+   PostMessage( hwndClock, WM_TIMECHANGE, 0, 0 );
 }
 
 
@@ -693,4 +676,25 @@ COLORREF GetThemeForeColor()
    }
 
    return clr;
+}
+
+
+void WriteLog( LPCTSTR lpszDebugOut, ... )
+{
+   TCHAR buf[1024]; 
+   va_list arg_list;
+
+   va_start( arg_list, lpszDebugOut );
+   _vstprintf( buf, lpszDebugOut, arg_list );
+   va_end( arg_list );
+
+#ifdef _UNICODE
+   FILE* file = _wfopen( _T("c:\\log.txt"), _T("a+") );
+   fwprintf( file, _T("%s"), buf );
+   fclose( file );
+#else
+   FILE* file = fopen( _T("c:\\log.txt"), _T("a+") );
+   fprintf( file, _T("%s"), buf );
+   fclose( file );
+#endif
 }
