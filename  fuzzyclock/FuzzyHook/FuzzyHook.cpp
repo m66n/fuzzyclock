@@ -81,7 +81,7 @@ COLORREF GetThemeForeColor();
 LRESULT HookProc( int, WPARAM, LPARAM );
 void Initialize();
 LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
-void RefreshTaskbar(HWND hwndClock);
+void RefreshTaskbar( HWND );
 tstring TimeString();
 
 // debugging
@@ -97,7 +97,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
    if ( DLL_PROCESS_ATTACH == ul_reason_for_call )
    {
       g_hInst = (HINSTANCE)hModule;	
-      ::DisableThreadLibraryCalls( g_hInst );
+      DisableThreadLibraryCalls( g_hInst );
 
       if ( 0 == RWM_FUZZYHOOK )
       {
@@ -154,31 +154,20 @@ LRESULT HookProc( int code, WPARAM wParam, LPARAM lParam )
             TCHAR dllPath[MAX_PATH+1];
             GetModuleFileName( g_hInst, dllPath, MAX_PATH+1 );
 
-            WriteLog( _T("GetModuleFileName(): %s\r\n"), dllPath );
-
             if ( LoadLibrary( dllPath ) )
             {
                g_wndProcOld = (WNDPROC)(intptr_t)SetWindowLong( g_hWnd, GWL_WNDPROC, (long)(intptr_t)NewWndProc );
 
-               WriteLog( _T("SetWindowLong() returns %x.  NewWndProc is %x.\r\n"), g_wndProcOld, NewWndProc );
-
                if ( NULL == g_wndProcOld )
                {
-                  WriteLog( _T("SetWindowLong() failed: %d\r\n"), GetLastError() );
                   FreeLibrary( g_hInst );
                }
                else
                {
-                  WriteLog( _T("SetWindowLong() successful.\r\n") );
                   g_subclassed = TRUE;
                   Initialize();
                   InvalidateRect( g_hWnd, NULL, TRUE );
-                  WriteLog( _T("InvalidateRect( %x, NULL, TRUE )\r\n"), g_hWnd );
                }
-            }
-            else
-            {
-               WriteLog( _T("LoadLibrary() failed: %d\r\n"), GetLastError() );
             }
          }
       }
@@ -205,11 +194,7 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 {
    if ( message == RWM_FUZZYHOOK )
    {
-      WriteLog( _T("NewWndProc( %x, RWM_FUZZYHOOK, %x, %x)\r\n"), hWnd, wParam, lParam );
-   }
-   else
-   {
-      WriteLog( _T("NewWndProc( %x, %x, %x, %x)\r\n"), hWnd, message, wParam, lParam );
+      return 0;
    }
 
    switch ( message )
@@ -218,7 +203,7 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
       PAINTSTRUCT ps;
       HDC hDC;
-      
+
       hDC = BeginPaint( hWnd, &ps );
       DrawFuzzyClock( hWnd, hDC );
       EndPaint( hWnd, &ps );
@@ -252,17 +237,10 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
       InvalidateRect( hWnd, NULL, FALSE );
       return 0;
 
-   case WM_RBUTTONUP:
-
-      WriteLog( _T("WM_RBUTTONUP\r\n") );
-      break;
-
    case WM_NCHITTEST:
 
       return DefWindowProc( hWnd, message, wParam, lParam );
    }
-
-   WriteLog( _T("CallWindowProc( %x, %x, %x, %x, %x )\r\n"), g_wndProcOld, hWnd, message, wParam, lParam );
 
    return CallWindowProc( g_wndProcOld, hWnd, message, wParam, lParam );
 }
