@@ -239,7 +239,7 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
    case WM_NCHITTEST:
 
-      return DefWindowProc( hWnd, message, wParam, lParam );
+      return HTTRANSPARENT;
    }
 
    return CallWindowProc( g_wndProcOld, hWnd, message, wParam, lParam );
