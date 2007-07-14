@@ -7,9 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#define APSTUDIO_HIDDEN_SYMBOLS
-#include "windows.h"
-#undef APSTUDIO_HIDDEN_SYMBOLS
+#include "afxres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -22,38 +20,6 @@
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 #endif //_WIN32
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_FUZZYCLOCK          ICON                    "FuzzyClock.ico"
-IDI_SMALL               ICON                    "small.ico"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Menu
-//
-
-IDC_FUZZYCLOCK MENU 
-BEGIN
-    POPUP "&File"
-    BEGIN
-        MENUITEM "E&xit",                       IDM_EXIT
-    END
-END
-
-IDR_TRAYMENU MENU 
-BEGIN
-    POPUP "_POPUP_"
-    BEGIN
-        MENUITEM "Exit",                        IDM_EXIT
-    END
-END
-
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -68,9 +34,7 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
-    "#include ""windows.h""\r\n"
-    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""afxres.h""\r\n"
     "\0"
 END
 
@@ -98,19 +62,19 @@ VS_VERSION_INFO VERSIONINFO
  FILEFLAGS 0x0L
 #endif
  FILEOS 0x4L
- FILETYPE 0x1L
+ FILETYPE 0x2L
  FILESUBTYPE 0x0L
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "FileDescription", "FuzzyClock Application"
+            VALUE "FileDescription", "FuzzyHook Dynamic Link Library"
             VALUE "FileVersion", "1, 0, 0, 1"
-            VALUE "InternalName", "FuzzyClock"
+            VALUE "InternalName", "FuzzyHook"
             VALUE "LegalCopyright", "Copyright (C) 2007 Michael Chapman"
-            VALUE "OriginalFilename", "FuzzyClock.exe"
-            VALUE "ProductName", "FuzzyClock Application"
+            VALUE "OriginalFilename", "FuzzyHook.dll"
+            VALUE "ProductName", "FuzzyHook Dynamic Link Library"
             VALUE "ProductVersion", "1, 0, 0, 1"
         END
     END
@@ -118,18 +82,6 @@ BEGIN
     BEGIN
         VALUE "Translation", 0x409, 1200
     END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// String Table
-//
-
-STRINGTABLE 
-BEGIN
-    IDS_APP_TITLE           "FuzzyClock"
-    IDC_FUZZYCLOCK          "FUZZYCLOCK"
 END
 
 #endif    // English (U.S.) resources
