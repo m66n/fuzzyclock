@@ -36,3 +36,6 @@
 
 FUZZYHOOK_API BOOL Hook( HWND );
 FUZZYHOOK_API BOOL Unhook();
+
+FUZZYHOOK_API void GetApplicationName( LPWSTR szName, int cch );
+FUZZYHOOK_API void GetExitText( LPWSTR szText, int cch );

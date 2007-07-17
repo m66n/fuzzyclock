@@ -21,8 +21,10 @@
 
 
 #include "stdafx.h"
+#include "resource.h"
 #include "FuzzyHook.h"
 #include <string>
+#include <vector>
 #include <stdio.h>
 
 #ifdef _UNICODE
@@ -61,12 +63,16 @@ HBITMAP g_hbmpClock = NULL;
 HDC g_hdcClockBackground = NULL;
 HBITMAP g_hbmpClockBackground = NULL;
 
-LPCTSTR HourNames[] = { _T("one"), _T("two"), _T("three"), _T("four"), _T("five"), _T("six"),
-_T("seven"), _T("eight"), _T("nine"), _T("ten"), _T("eleven"), _T("twelve") };
+//LPCTSTR HourNames[] = { _T("one"), _T("two"), _T("three"), _T("four"), _T("five"), _T("six"),
+//_T("seven"), _T("eight"), _T("nine"), _T("ten"), _T("eleven"), _T("twelve") };
+//
+//LPCTSTR FuzzyTimes[] = { _T("%0 o'clock"), _T("five past %0"), _T("ten past %0"), _T("quarter past %0"),
+//_T("twenty past %0"), _T("twenty five past %0"), _T("half past %0"), _T("twenty five to %1"),
+//_T("twenty to %1"), _T("quarter to %1"), _T("ten to %1"), _T("five to %1"), _T("%1 o'clock") };
 
-LPCTSTR FuzzyTimes[] = { _T("%0 o'clock"), _T("five past %0"), _T("ten past %0"), _T("quarter past %0"),
-_T("twenty past %0"), _T("twenty five past %0"), _T("half past %0"), _T("twenty five to %1"),
-_T("twenty to %1"), _T("quarter to %1"), _T("ten to %1"), _T("five to %1"), _T("%1 o'clock") };
+
+std::vector<std::wstring> HourNames;
+std::vector<std::wstring> FuzzyTimes;
 
 
 LRESULT CalculateWindowSize( HWND );
@@ -76,13 +82,15 @@ void CopyParentSurface( HWND, HDC, int, int, int, int, int, int );
 bool CreateClockHDC( HWND );
 bool CreateMemoryDC( HDC, HDC&, HBITMAP&, int, int );
 void DrawFuzzyClock( HWND, HDC );
-void GetTextSize( HDC, LPCTSTR, TEXTMETRIC&, SIZE& );
+int GetBaseResourceId();
+void GetTextSize( HDC, LPCWSTR, TEXTMETRIC&, SIZE& );
 COLORREF GetThemeForeColor();
 LRESULT HookProc( int, WPARAM, LPARAM );
 void Initialize();
+void InitializeStrings();
 LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
 void RefreshTaskbar( HWND );
-tstring TimeString();
+std::wstring TimeString();
 
 // debugging
 //
@@ -246,9 +254,9 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 }
 
 
-tstring TimeString()
+std::wstring TimeString()
 {
-   tstring timeString;
+   std::wstring timeString;
 
    SYSTEMTIME systemTime;
 
@@ -265,11 +273,11 @@ tstring TimeString()
 
    timeString = FuzzyTimes[sector];
 
-   size_t startIndex = timeString.find( _T("%") );
+   size_t startIndex = timeString.find( L"%" );
 
    if ( startIndex != std::string::npos )
    {
-      size_t endIndex = timeString.find( _T(" "), startIndex );
+      size_t endIndex = timeString.find( L" ", startIndex );
 
       if ( std::string::npos == endIndex )
       {
@@ -278,7 +286,7 @@ tstring TimeString()
 
       size_t fieldLength = endIndex - startIndex;
 
-      int deltaHour = _ttoi( timeString.substr( startIndex + 1, fieldLength - 1  ).c_str() );
+      int deltaHour = _wtoi( timeString.substr( startIndex + 1, fieldLength - 1  ).c_str() );
 
       if ( ( systemTime.wHour + deltaHour ) % 12 > 0 )
       {
@@ -319,7 +327,7 @@ LRESULT CalculateWindowSize( HWND hwnd )
 
    GetTextMetrics( hdc, &tm );
 
-   tstring timeString = TimeString();
+   std::wstring timeString = TimeString();
 
    SIZE sizeText;
 
@@ -369,7 +377,7 @@ void DrawFuzzyClock( HWND hWnd, HDC hDC )
 
    BitBlt( g_hdcClock, 0, 0, rc.right, rc.bottom, g_hdcClockBackground, 0, 0, SRCCOPY );
 
-   tstring timeString = TimeString();
+   std::wstring timeString = TimeString();
 
    TEXTMETRIC textMetric;
    GetTextMetrics( g_hdcClock, &textMetric );
@@ -381,7 +389,7 @@ void DrawFuzzyClock( HWND hWnd, HDC hDC )
    int x = rc.right / 2;;
    int y = ( rc.bottom - sizeText.cy ) / 2 - textMetric.tmInternalLeading / 2;
 
-   TextOut( g_hdcClock, x, y, timeString.c_str(), (int)timeString.size() );
+   TextOutW( g_hdcClock, x, y, timeString.c_str(), (int)timeString.size() );
 
    BitBlt( hDC, 0, 0, rc.right, rc.bottom, g_hdcClock, 0, 0, SRCCOPY );
 
@@ -427,6 +435,121 @@ void Initialize()
    lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 
    g_hFont = CreateFontIndirect( &lf );
+
+   InitializeStrings();
+}
+
+
+int GetBaseResourceId()
+{
+   LANGID langId = GetUserDefaultLangID();
+
+   int baseId = IDS_EN_APPNAME;
+
+   switch ( PRIMARYLANGID( langId ) )
+   {
+   case LANG_CHINESE:
+
+      if ( SUBLANGID( langId ) == SUBLANG_CHINESE_TRADITIONAL )
+      {
+         baseId = IDS_TW_APPNAME;
+      }
+      else
+      {
+         baseId = IDS_CN_APPNAME;
+      }
+
+      break;
+
+   case LANG_GERMAN:
+
+      baseId = IDS_DE_APPNAME;
+      break;
+
+   case LANG_SPANISH:
+
+      baseId = IDS_ES_APPNAME;
+      break;
+
+   case LANG_FRENCH:
+
+      baseId = IDS_FR_APPNAME;
+      break;
+
+   case LANG_ITALIAN:
+
+      baseId = IDS_IT_APPNAME;
+      break;
+
+   case LANG_JAPANESE:
+
+      baseId = IDS_JA_APPNAME;
+      break;
+
+   case LANG_KOREAN:
+
+      baseId = IDS_KO_APPNAME;
+      break;
+
+   case LANG_DUTCH:
+
+      baseId = IDS_NL_APPNAME;
+      break;
+
+   case LANG_PORTUGUESE:
+
+      if ( SUBLANGID( langId ) == SUBLANG_PORTUGUESE_BRAZILIAN )
+      {
+         baseId = IDS_BR_APPNAME;
+      }
+      else
+      {
+         baseId = IDS_PT_APPNAME;
+      }
+
+      break;
+
+   case LANG_ROMANIAN:
+
+      baseId = IDS_RO_APPNAME;
+      break;
+
+   case LANG_RUSSIAN:
+
+      baseId = IDS_RU_APPNAME;
+      break;
+
+   case LANG_VIETNAMESE:
+
+      baseId = IDS_VN_APPNAME;
+      break;
+   }
+
+   return baseId;
+}
+
+
+void InitializeStrings()
+{
+   int baseId = GetBaseResourceId();
+
+   wchar_t buffer[64];
+
+   HourNames.clear();
+
+   for ( int hourIndex = 0; hourIndex < 12; ++hourIndex )
+   {
+      LoadStringW( g_hInst, baseId + 2 + hourIndex, buffer, 64 );
+      HourNames.push_back( buffer );
+   }
+
+   FuzzyTimes.clear();
+
+   for ( int timeIndex = 0; timeIndex < 13; ++timeIndex )
+   {
+      LoadStringW( g_hInst, baseId + 2 + (UINT)HourNames.size() + timeIndex, buffer, 64 );
+      FuzzyTimes.push_back( buffer );
+   }
 }
 
 
@@ -571,16 +694,16 @@ bool CreateClockHDC( HWND hWnd )
 }
 
 
-void GetTextSize( HDC hDC, LPCTSTR szText, TEXTMETRIC& textMetric, SIZE& size )
+void GetTextSize( HDC hDC, LPCWSTR szText, TEXTMETRIC& textMetric, SIZE& size )
 {
    size.cx = 0;
    size.cy = 0;
 
    int heightFont = textMetric.tmHeight - textMetric.tmInternalLeading;
 
-   if ( GetTextExtentPoint32( hDC, szText, (int)_tcslen( szText ), &size ) == 0 )
+   if ( GetTextExtentPoint32W( hDC, szText, (int)wcslen( szText ), &size ) == 0 )
    {
-      size.cx = (int)_tcslen( szText ) * textMetric.tmAveCharWidth;
+      size.cx = (int)wcslen( szText ) * textMetric.tmAveCharWidth;
    }
 
    size.cy = heightFont;
@@ -654,6 +777,22 @@ COLORREF GetThemeForeColor()
    }
 
    return clr;
+}
+
+
+void GetApplicationName( LPWSTR szName, int cch )
+{
+   int baseId = GetBaseResourceId();
+
+   LoadStringW( g_hInst, baseId, szName, cch );
+}
+
+
+void GetExitText( LPWSTR szText, int cch )
+{
+   int baseId = GetBaseResourceId();
+
+   LoadStringW( g_hInst, baseId + 1, szText, cch );
 }
 
 

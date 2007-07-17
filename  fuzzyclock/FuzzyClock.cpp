@@ -36,7 +36,7 @@ HINSTANCE g_hInstance;
 HWND g_hWnd;
 TCHAR g_szTitle[MAX_LOADSTRING];
 TCHAR g_szWindowClass[MAX_LOADSTRING];
-NOTIFYICONDATA g_nid;
+NOTIFYICONDATAW g_nid;
 
 const UINT RWM_TRAYICON = RegisterWindowMessage( _T("RWM_TRAYICON__C363ED38_3BEA_477b_B407_2A235F89F4E7") );
 
@@ -44,7 +44,7 @@ const UINT RWM_TRAYICON = RegisterWindowMessage( _T("RWM_TRAYICON__C363ED38_3BEA
 ATOM RegisterWindow( HINSTANCE );
 BOOL InitInstance( HINSTANCE, int );
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
-BOOL AddTrayIcon( HWND, LPCTSTR, HICON, UINT );
+BOOL AddTrayIcon( HWND, LPCWSTR, HICON, UINT );
 BOOL RemoveTrayIcon();
 LRESULT OnTrayIcon( WPARAM, LPARAM );
 HWND GetTrayClock();
@@ -81,7 +81,10 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
    MSG msg;
 
    HICON hTrayIcon = reinterpret_cast<HICON>( LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ), IMAGE_ICON, 0, 0, 0 ) );
-   AddTrayIcon( g_hWnd, _T("FuzzyClock: Right-Click to Exit"), hTrayIcon, IDR_TRAYMENU );
+   
+   wchar_t szName[64];
+   GetApplicationName( szName, 64 );
+   AddTrayIcon( g_hWnd, szName, hTrayIcon, IDR_TRAYMENU );
 
 	while ( GetMessage( &msg, NULL, 0, 0 ) )
 	{
@@ -187,7 +190,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 }
 
 
-BOOL AddTrayIcon( HWND hWnd, LPCTSTR lpszToolTip, HICON hIcon, UINT uID )
+BOOL AddTrayIcon( HWND hWnd, LPCWSTR lpszToolTip, HICON hIcon, UINT uID )
 {
    ZeroMemory( &g_nid, sizeof( NOTIFYICONDATA ) );
 
@@ -198,9 +201,9 @@ BOOL AddTrayIcon( HWND hWnd, LPCTSTR lpszToolTip, HICON hIcon, UINT uID )
    g_nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
    g_nid.uCallbackMessage = RWM_TRAYICON;
 
-   _tcscpy_s( g_nid.szTip, sizeof( g_nid.szTip ), lpszToolTip );
+   wcscpy_s( g_nid.szTip, sizeof( g_nid.szTip ), lpszToolTip );
 
-   return Shell_NotifyIcon( NIM_ADD, &g_nid );
+   return Shell_NotifyIconW( NIM_ADD, &g_nid );
 }
 
 
@@ -208,7 +211,7 @@ BOOL RemoveTrayIcon()
 {
    g_nid.uFlags = 0;
 
-   return Shell_NotifyIcon( NIM_DELETE, &g_nid );
+   return Shell_NotifyIconW( NIM_DELETE, &g_nid );
 }
 
 
@@ -238,6 +241,21 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
          GetCursorPos( &cursorPos );
 
          SetMenuDefaultItem( hPopupMenu, 0, TRUE );
+
+         wchar_t buffer[64];
+         GetExitText( buffer, 64 );
+
+         MENUITEMINFOW mii;
+         mii.cbSize = sizeof( MENUITEMINFOW );
+
+         GetMenuItemInfoW( hPopupMenu, 0, TRUE, &mii );
+
+         mii.fMask = MIIM_TYPE;
+         mii.fType = MFT_STRING;
+         mii.dwTypeData = buffer;
+         mii.cch = (UINT)wcslen( buffer );
+
+         SetMenuItemInfoW( hPopupMenu, 0, TRUE, &mii );
 
          TrackPopupMenu( hPopupMenu, TPM_LEFTALIGN, cursorPos.x, cursorPos.y, 0, g_hWnd, NULL );
 
