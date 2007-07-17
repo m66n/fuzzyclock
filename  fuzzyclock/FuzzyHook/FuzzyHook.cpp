@@ -442,11 +442,13 @@ void Initialize()
 
 int GetBaseResourceId()
 {
-   LANGID langId = GetUserDefaultLangID();
+   LANGID langId = GetSystemDefaultUILanguage();
 
    int baseId = IDS_EN_APPNAME;
 
-   switch ( PRIMARYLANGID( langId ) )
+   UINT primaryLangId = PRIMARYLANGID( langId );
+
+   switch ( primaryLangId )
    {
    case LANG_CHINESE:
 
