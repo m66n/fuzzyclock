@@ -85,7 +85,7 @@ void DrawFuzzyClock( HWND, HDC );
 int GetBaseResourceId();
 void GetTextSize( HDC, LPCWSTR, TEXTMETRIC&, SIZE& );
 COLORREF GetThemeForeColor();
-LRESULT HookProc( int, WPARAM, LPARAM );
+LRESULT _stdcall HookProc( int, WPARAM, LPARAM );
 void Initialize();
 void InitializeStrings();
 LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
@@ -147,7 +147,7 @@ FUZZYHOOK_API BOOL Unhook()
 }
 
 
-LRESULT HookProc( int code, WPARAM wParam, LPARAM lParam )
+LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
 {
    LPCWPSTRUCT pCWP = reinterpret_cast<LPCWPSTRUCT>(lParam);
 
