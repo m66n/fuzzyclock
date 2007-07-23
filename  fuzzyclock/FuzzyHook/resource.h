@@ -407,6 +407,33 @@
 #define IDS_VN_TIME10       10724
 #define IDS_VN_TIME11       10725
 #define IDS_VN_TIME12       10726
+#define IDS_HR_APPNAME      10750
+#define IDS_HR_EXIT         10751
+#define IDS_HR_HOUR00       10752
+#define IDS_HR_HOUR01       10753
+#define IDS_HR_HOUR02       10754
+#define IDS_HR_HOUR03       10755
+#define IDS_HR_HOUR04       10756
+#define IDS_HR_HOUR05       10757
+#define IDS_HR_HOUR06       10758
+#define IDS_HR_HOUR07       10759
+#define IDS_HR_HOUR08       10760
+#define IDS_HR_HOUR09       10761
+#define IDS_HR_HOUR10       10762
+#define IDS_HR_HOUR11       10763
+#define IDS_HR_TIME00       10764
+#define IDS_HR_TIME01       10765
+#define IDS_HR_TIME02       10766
+#define IDS_HR_TIME03       10767
+#define IDS_HR_TIME04       10768
+#define IDS_HR_TIME05       10769
+#define IDS_HR_TIME06       10770
+#define IDS_HR_TIME07       10771
+#define IDS_HR_TIME08       10772
+#define IDS_HR_TIME09       10773
+#define IDS_HR_TIME10       10774
+#define IDS_HR_TIME11       10775
+#define IDS_HR_TIME12       10776
 
 // Next default values for new objects
 // 

@@ -86,6 +86,8 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
    GetApplicationName( szName, 64 );
    AddTrayIcon( g_hWnd, szName, hTrayIcon, IDR_TRAYMENU );
 
+   SetProcessWorkingSetSize( GetCurrentProcess(), -1, -1 );
+
 	while ( GetMessage( &msg, NULL, 0, 0 ) )
 	{
 		TranslateMessage( &msg );

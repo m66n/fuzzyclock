@@ -63,6 +63,8 @@ HBITMAP g_hbmpClock = NULL;
 HDC g_hdcClockBackground = NULL;
 HBITMAP g_hbmpClockBackground = NULL;
 
+BOOL g_bRemoveSpaces = FALSE;
+
 //LPCTSTR HourNames[] = { _T("one"), _T("two"), _T("three"), _T("four"), _T("five"), _T("six"),
 //_T("seven"), _T("eight"), _T("nine"), _T("ten"), _T("eleven"), _T("twelve") };
 //
@@ -94,7 +96,7 @@ std::wstring TimeString();
 
 // debugging
 //
-void WriteLog( LPCTSTR lpszDebugOut, ... );
+//void WriteLog( LPCTSTR lpszDebugOut, ... );
 
 
 
@@ -275,11 +277,11 @@ std::wstring TimeString()
 
    size_t startIndex = timeString.find( L"%" );
 
-   if ( startIndex != std::string::npos )
+   if ( startIndex != std::wstring::npos )
    {
       size_t endIndex = timeString.find( L" ", startIndex );
 
-      if ( std::string::npos == endIndex )
+      if ( std::wstring::npos == endIndex )
       {
          endIndex = timeString.length();
       }
@@ -300,6 +302,17 @@ std::wstring TimeString()
       timeString.replace( startIndex, fieldLength, HourNames[realHour] );
 
       timeString.replace( 0, 1, 1, _totupper( timeString.at( 0 ) ) );
+
+      if ( g_bRemoveSpaces )
+      {
+         size_t spaceIndex = timeString.find( L" " );
+
+         while ( spaceIndex != std::wstring::npos )
+         {
+            timeString.erase( spaceIndex, 1 );
+            spaceIndex = timeString.find( L" " );
+         }
+      }
    }
 
    return timeString;
@@ -442,6 +455,8 @@ void Initialize()
 
 int GetBaseResourceId()
 {
+   g_bRemoveSpaces = FALSE;
+
    LANGID langId = GetSystemDefaultUILanguage();
 
    int baseId = IDS_EN_APPNAME;
@@ -451,6 +466,8 @@ int GetBaseResourceId()
    switch ( primaryLangId )
    {
    case LANG_CHINESE:
+
+      g_bRemoveSpaces = TRUE;
 
       if ( SUBLANGID( langId ) == SUBLANG_CHINESE_TRADITIONAL )
       {
@@ -484,6 +501,8 @@ int GetBaseResourceId()
       break;
 
    case LANG_JAPANESE:
+
+      g_bRemoveSpaces = TRUE;
 
       baseId = IDS_JA_APPNAME;
       break;
@@ -524,6 +543,11 @@ int GetBaseResourceId()
    case LANG_VIETNAMESE:
 
       baseId = IDS_VN_APPNAME;
+      break;
+
+   case LANG_CROATIAN:
+
+      baseId = IDS_HR_APPNAME;
       break;
    }
 
