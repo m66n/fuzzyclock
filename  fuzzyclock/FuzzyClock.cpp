@@ -55,73 +55,73 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
                         LPTSTR    lpCmdLine,
                         int       nCmdShow )
 {
-	UNREFERENCED_PARAMETER( hPrevInstance );
-	UNREFERENCED_PARAMETER( lpCmdLine );
+   UNREFERENCED_PARAMETER( hPrevInstance );
+   UNREFERENCED_PARAMETER( lpCmdLine );
 
    HANDLE hMutexSingleInstance = CreateMutex( NULL, FALSE, _T("FuzzyClock__8E5405E2_BD48_41cd_AAF4_C7183EA13CBB") );
 
    if ( GetLastError() == ERROR_ALREADY_EXISTS ||
-        GetLastError() == ERROR_ACCESS_DENIED )
+      GetLastError() == ERROR_ACCESS_DENIED )
    {
       return FALSE;
    }
 
-	LoadString( hInstance, IDS_APP_TITLE, g_szTitle, MAX_LOADSTRING );
-	LoadString( hInstance, IDC_FUZZYCLOCK, g_szWindowClass, MAX_LOADSTRING );
+   LoadString( hInstance, IDS_APP_TITLE, g_szTitle, MAX_LOADSTRING );
+   LoadString( hInstance, IDC_FUZZYCLOCK, g_szWindowClass, MAX_LOADSTRING );
 
-	RegisterWindow( hInstance );
+   RegisterWindow( hInstance );
 
-	if ( !InitInstance( hInstance, nCmdShow ) )
-	{
-		return FALSE;
-	}
+   if ( !InitInstance( hInstance, nCmdShow ) )
+   {
+      return FALSE;
+   }
 
    Hook( GetTrayClock() );
 
    MSG msg;
 
    HICON hTrayIcon = reinterpret_cast<HICON>( LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ), IMAGE_ICON, 0, 0, 0 ) );
-   
+
    wchar_t szName[64];
    GetApplicationName( szName, 64 );
    AddTrayIcon( g_hWnd, szName, hTrayIcon, IDR_TRAYMENU );
 
    SetProcessWorkingSetSize( GetCurrentProcess(), -1, -1 );
 
-	while ( GetMessage( &msg, NULL, 0, 0 ) )
-	{
-		TranslateMessage( &msg );
-		DispatchMessage( &msg );
-	}
+   while ( GetMessage( &msg, NULL, 0, 0 ) )
+   {
+      TranslateMessage( &msg );
+      DispatchMessage( &msg );
+   }
 
    RemoveTrayIcon();
    DestroyIcon( hTrayIcon );
 
    Unhook();
 
-	return static_cast<int>( msg.wParam );
+   return static_cast<int>( msg.wParam );
 }
 
 
 ATOM RegisterWindow( HINSTANCE hInstance )
 {
-	WNDCLASSEX wcex;
+   WNDCLASSEX wcex;
 
-	wcex.cbSize = sizeof(WNDCLASSEX);
+   wcex.cbSize = sizeof(WNDCLASSEX);
 
-	wcex.style              = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc        = WndProc;
-	wcex.cbClsExtra         = 0;
-	wcex.cbWndExtra         = 0;
-	wcex.hInstance          = hInstance;
-	wcex.hIcon              = LoadIcon( hInstance, MAKEINTRESOURCE( IDI_FUZZYCLOCK ) );
-	wcex.hCursor            = LoadCursor( NULL, IDC_ARROW );
-	wcex.hbrBackground      = reinterpret_cast<HBRUSH>( COLOR_WINDOW + 1 );
-	wcex.lpszMenuName       = MAKEINTRESOURCE(IDC_FUZZYCLOCK);
-	wcex.lpszClassName      = g_szWindowClass;
-   wcex.hIconSm            = reinterpret_cast<HICON>( LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ), IMAGE_ICON, 0, 0, 0 ) );
+   wcex.style              = CS_HREDRAW | CS_VREDRAW;
+   wcex.lpfnWndProc        = WndProc;
+   wcex.cbClsExtra         = 0;
+   wcex.cbWndExtra         = 0;
+   wcex.hInstance          = hInstance;
+   wcex.hIcon              = LoadIcon( hInstance, MAKEINTRESOURCE( IDI_FUZZYCLOCK ) );
+   wcex.hCursor            = LoadCursor( NULL, IDC_ARROW );
+   wcex.hbrBackground      = (HBRUSH)( COLOR_WINDOW + 1 );
+   wcex.lpszMenuName       = MAKEINTRESOURCE( IDC_FUZZYCLOCK );
+   wcex.lpszClassName      = g_szWindowClass;
+   wcex.hIconSm            = (HICON)LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ), IMAGE_ICON, 0, 0, 0 );
 
-	return RegisterClassEx( &wcex );
+   return RegisterClassEx( &wcex );
 }
 
 
@@ -146,41 +146,41 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 
 LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	switch ( message )
-	{
-	case WM_COMMAND:
+   switch ( message )
+   {
+   case WM_COMMAND:
 
       {
-		   int wmId = LOWORD( wParam );
-		   int wmEvent = HIWORD( wParam );
+         int wmId = LOWORD( wParam );
+         int wmEvent = HIWORD( wParam );
 
          switch ( wmId )
-		   {
-		   case IDM_EXIT:
+         {
+         case IDM_EXIT:
 
-			   DestroyWindow( hWnd );
-			   break;
+            DestroyWindow( hWnd );
+            break;
 
-		   default:
+         default:
 
-			   return DefWindowProc( hWnd, message, wParam, lParam );
-		   }
+            return DefWindowProc( hWnd, message, wParam, lParam );
+         }
       }
-		break;
+      break;
 
-	case WM_PAINT:
+   case WM_PAINT:
 
       {
          PAINTSTRUCT ps;
          HDC hdc = BeginPaint( hWnd, &ps );
          EndPaint( hWnd, &ps );
       }
-		break;
+      break;
 
-	case WM_DESTROY:
+   case WM_DESTROY:
 
-		PostQuitMessage( 0 );
-		break;
+      PostQuitMessage( 0 );
+      break;
    }
 
    if ( message == RWM_TRAYICON )
@@ -188,7 +188,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
       return OnTrayIcon( wParam, lParam );
    }
 
-	return DefWindowProc( hWnd, message, wParam, lParam );
+   return DefWindowProc( hWnd, message, wParam, lParam );
 }
 
 
