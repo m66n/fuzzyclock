@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<fuzzy_clock>
+   <application_name>模糊時鐘</application_name>
+   <exit_text>結束</exit_text>
+   <hours_text>
+      <hour_text index="0">一</hour_text>
+      <hour_text index="1">二</hour_text>
+      <hour_text index="2">三</hour_text>
+      <hour_text index="3">四</hour_text>
+      <hour_text index="4">五</hour_text>
+      <hour_text index="5">六</hour_text>
+      <hour_text index="6">七</hour_text>
+      <hour_text index="7">八</hour_text>
+      <hour_text index="8">九</hour_text>
+      <hour_text index="9">十</hour_text>
+      <hour_text index="10">十一</hour_text>
+      <hour_text index="11">十二</hour_text>
+   </hours_text>
+   <times_text>
+      <time_text index="0">%0點鐘</time_text>
+      <time_text index="1">%0點五分</time_text>
+      <time_text index="2">%0點十分</time_text>
+      <time_text index="3">%0點十五分</time_text>
+      <time_text index="4">%0點二十</time_text>
+      <time_text index="5">%0點二十五</time_text>
+      <time_text index="6">%0點半</time_text>
+      <time_text index="7">差二十五分%1點</time_text>
+      <time_text index="8">差二十分%1點</time_text>
+      <time_text index="9">差十五分%1點</time_text>
+      <time_text index="10">差十分%1點</time_text>
+      <time_text index="11">差五分%1點</time_text>
+      <time_text index="12">%1點鐘</time_text>
+   </times_text>
+</fuzzy_clock>

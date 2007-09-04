@@ -23,22 +23,24 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "FuzzyHook.h"
+#include "XMLHelper.h"
+#include "WriteLog.h"
 #include <string>
 #include <vector>
-#include <stdio.h>
 
-#ifdef _UNICODE
-#define tstring std::wstring
-#else
-#define tstring std::string
-#endif
+
+#define STRING_SIZE 64
 
 
 #pragma data_seg(".fuzzy")
 BOOL g_subclassed = FALSE;
 UINT RWM_FUZZYHOOK = 0;
+UINT RWM_RESETTEXT = 0;
 HWND g_hWnd	= NULL;
 HHOOK g_hHook = NULL;
+wchar_t g_szXMLFile[MAX_PATH+1] = L"";
+wchar_t g_szApplicationName[STRING_SIZE] = L"";
+wchar_t g_szExitText[STRING_SIZE] = L"";
 #pragma data_seg()
 
 #pragma comment(linker,"/SECTION:.fuzzy,RWS")
@@ -63,18 +65,7 @@ HBITMAP g_hbmpClock = NULL;
 HDC g_hdcClockBackground = NULL;
 HBITMAP g_hbmpClockBackground = NULL;
 
-BOOL g_bRemoveSpaces = FALSE;
-
-//LPCTSTR HourNames[] = { _T("one"), _T("two"), _T("three"), _T("four"), _T("five"), _T("six"),
-//_T("seven"), _T("eight"), _T("nine"), _T("ten"), _T("eleven"), _T("twelve") };
-//
-//LPCTSTR FuzzyTimes[] = { _T("%0 o'clock"), _T("five past %0"), _T("ten past %0"), _T("quarter past %0"),
-//_T("twenty past %0"), _T("twenty five past %0"), _T("half past %0"), _T("twenty five to %1"),
-//_T("twenty to %1"), _T("quarter to %1"), _T("ten to %1"), _T("five to %1"), _T("%1 o'clock") };
-
-
-std::vector<std::wstring> HourNames;
-std::vector<std::wstring> FuzzyTimes;
+XMLHelper g_xmlHelper;
 
 
 LRESULT CalculateWindowSize( HWND );
@@ -89,15 +80,10 @@ void GetTextSize( HDC, LPCWSTR, TEXTMETRIC&, SIZE& );
 COLORREF GetThemeForeColor();
 LRESULT _stdcall HookProc( int, WPARAM, LPARAM );
 void Initialize();
-void InitializeStrings();
 LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
+bool ParseXML();
 void RefreshTaskbar( HWND );
 std::wstring TimeString();
-
-// debugging
-//
-//void WriteLog( LPCTSTR lpszDebugOut, ... );
-
 
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -112,6 +98,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
       if ( 0 == RWM_FUZZYHOOK )
       {
          RWM_FUZZYHOOK = RegisterWindowMessage( _T("RWM_FUZZYHOOK__B78C168A_5AE4_405c_A8B6_B30FB917567A") );
+         RWM_RESETTEXT = RegisterWindowMessage( _T("RWM_RESETTEXT__AD6337A5_5544_48cd_9C29_B9768DC467D3") );
       }
    }
 
@@ -119,9 +106,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 }
 
 
-FUZZYHOOK_API BOOL Hook( HWND hWnd )
+FUZZYHOOK_API BOOL Hook( HWND hWnd, LPCWSTR szXMLFile )
 {
    g_hWnd = hWnd;
+
+   wcscpy_s( g_szXMLFile, MAX_PATH, szXMLFile );
 
    g_hHook = SetWindowsHookEx( WH_CALLWNDPROC,(HOOKPROC)HookProc, g_hInst, GetWindowThreadProcessId( hWnd, NULL ) );
 
@@ -146,6 +135,26 @@ FUZZYHOOK_API BOOL Unhook()
    }
 
    return !g_subclassed;
+}
+
+
+FUZZYHOOK_API void ResetText( LPCWSTR szXMLFile )
+{
+   wcscpy_s( g_szXMLFile, MAX_PATH, szXMLFile );
+   SendMessage( g_hWnd, RWM_RESETTEXT, 0, 0 );
+   PostMessage( g_hWnd, WM_SIZE, SIZE_RESTORED, 0 );
+}
+
+
+FUZZYHOOK_API void GetApplicationName( LPWSTR szName, int cch )
+{
+   wcscpy_s( szName, min( cch, STRING_SIZE ), g_szApplicationName );
+}
+
+
+FUZZYHOOK_API void GetExitText( LPWSTR szText, int cch )
+{
+   wcscpy_s( szText, min( cch, STRING_SIZE ), g_szExitText );
 }
 
 
@@ -205,6 +214,11 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
    if ( message == RWM_FUZZYHOOK )
    {
       return 0;
+   }
+
+   if ( message == RWM_RESETTEXT )
+   {
+      ParseXML();
    }
 
    switch ( message )
@@ -273,20 +287,20 @@ std::wstring TimeString()
       sector = ( minute - 3 ) / 5 + 1;
    }
 
-   timeString = FuzzyTimes[sector];
+   timeString = g_xmlHelper.GetTimeText( sector );
 
    size_t startIndex = timeString.find( L"%" );
 
    if ( startIndex != std::wstring::npos )
    {
-      size_t endIndex = timeString.find( L" ", startIndex );
+      size_t endIndex = timeString.find_first_of( L"01", startIndex );
 
       if ( std::wstring::npos == endIndex )
       {
          endIndex = timeString.length();
       }
 
-      size_t fieldLength = endIndex - startIndex;
+      size_t fieldLength = endIndex - startIndex + 1;
 
       int deltaHour = _wtoi( timeString.substr( startIndex + 1, fieldLength - 1  ).c_str() );
 
@@ -299,20 +313,9 @@ std::wstring TimeString()
          realHour = 12 - ( ( systemTime.wHour + deltaHour ) % 12 + 1 );
       }
 
-      timeString.replace( startIndex, fieldLength, HourNames[realHour] );
+      timeString.replace( startIndex, fieldLength, g_xmlHelper.GetHourText( realHour ) );
 
       timeString.replace( 0, 1, 1, _totupper( timeString.at( 0 ) ) );
-
-      if ( g_bRemoveSpaces )
-      {
-         size_t spaceIndex = timeString.find( L" " );
-
-         while ( spaceIndex != std::wstring::npos )
-         {
-            timeString.erase( spaceIndex, 1 );
-            spaceIndex = timeString.find( L" " );
-         }
-      }
    }
 
    return timeString;
@@ -449,133 +452,7 @@ void Initialize()
 
    g_hFont = CreateFontIndirect( &lf );
 
-   InitializeStrings();
-}
-
-
-int GetBaseResourceId()
-{
-   g_bRemoveSpaces = FALSE;
-
-   LANGID langId = GetSystemDefaultUILanguage();
-
-   int baseId = IDS_EN_APPNAME;
-
-   UINT primaryLangId = PRIMARYLANGID( langId );
-
-   switch ( primaryLangId )
-   {
-   case LANG_CHINESE:
-
-      g_bRemoveSpaces = TRUE;
-
-      if ( SUBLANGID( langId ) == SUBLANG_CHINESE_TRADITIONAL )
-      {
-         baseId = IDS_TW_APPNAME;
-      }
-      else
-      {
-         baseId = IDS_CN_APPNAME;
-      }
-
-      break;
-
-   case LANG_GERMAN:
-
-      baseId = IDS_DE_APPNAME;
-      break;
-
-   case LANG_SPANISH:
-
-      baseId = IDS_ES_APPNAME;
-      break;
-
-   case LANG_FRENCH:
-
-      baseId = IDS_FR_APPNAME;
-      break;
-
-   case LANG_ITALIAN:
-
-      baseId = IDS_IT_APPNAME;
-      break;
-
-   case LANG_JAPANESE:
-
-      g_bRemoveSpaces = TRUE;
-
-      baseId = IDS_JA_APPNAME;
-      break;
-
-   case LANG_KOREAN:
-
-      baseId = IDS_KO_APPNAME;
-      break;
-
-   case LANG_DUTCH:
-
-      baseId = IDS_NL_APPNAME;
-      break;
-
-   case LANG_PORTUGUESE:
-
-      if ( SUBLANGID( langId ) == SUBLANG_PORTUGUESE_BRAZILIAN )
-      {
-         baseId = IDS_BR_APPNAME;
-      }
-      else
-      {
-         baseId = IDS_PT_APPNAME;
-      }
-
-      break;
-
-   case LANG_ROMANIAN:
-
-      baseId = IDS_RO_APPNAME;
-      break;
-
-   case LANG_RUSSIAN:
-
-      baseId = IDS_RU_APPNAME;
-      break;
-
-   case LANG_VIETNAMESE:
-
-      baseId = IDS_VN_APPNAME;
-      break;
-
-   case LANG_CROATIAN:
-
-      baseId = IDS_HR_APPNAME;
-      break;
-   }
-
-   return baseId;
-}
-
-
-void InitializeStrings()
-{
-   int baseId = GetBaseResourceId();
-
-   wchar_t buffer[64];
-
-   HourNames.clear();
-
-   for ( int hourIndex = 0; hourIndex < 12; ++hourIndex )
-   {
-      LoadStringW( g_hInst, baseId + 2 + hourIndex, buffer, 64 );
-      HourNames.push_back( buffer );
-   }
-
-   FuzzyTimes.clear();
-
-   for ( int timeIndex = 0; timeIndex < 13; ++timeIndex )
-   {
-      LoadStringW( g_hInst, baseId + 2 + (UINT)HourNames.size() + timeIndex, buffer, 64 );
-      FuzzyTimes.push_back( buffer );
-   }
+   ParseXML();
 }
 
 
@@ -766,11 +643,11 @@ COLORREF GetThemeForeColor()
       typedef HRESULT WINAPI CLOSETHEMEDATA( HANDLE );
 
       OPENTHEMEDATA* pOPENTHEMEDATA = reinterpret_cast<OPENTHEMEDATA*>(
-         GetProcAddress(hMod,("OpenThemeData")));
+         GetProcAddress( hMod, ( "OpenThemeData" ) ) );
       GETTHEMECOLOR* pGETTHEMECOLOR = reinterpret_cast<GETTHEMECOLOR*>(
-         GetProcAddress(hMod,("GetThemeColor")));
+         GetProcAddress( hMod, ( "GetThemeColor" ) ) );
       CLOSETHEMEDATA* pCLOSETHEMEDATA = reinterpret_cast<CLOSETHEMEDATA*>(
-         GetProcAddress(hMod,("CloseThemeData")));
+         GetProcAddress( hMod, ( "CloseThemeData" ) ) );
 
       //TMT_TEXTCOLOR 3803
       //CLP_TIME 1
@@ -806,38 +683,17 @@ COLORREF GetThemeForeColor()
 }
 
 
-void GetApplicationName( LPWSTR szName, int cch )
+bool ParseXML()
 {
-   int baseId = GetBaseResourceId();
+   bool success = g_xmlHelper.LoadFile( g_szXMLFile );
 
-   LoadStringW( g_hInst, baseId, szName, cch );
+   if ( success )
+   {
+      wcscpy_s( g_szApplicationName, STRING_SIZE, g_xmlHelper.GetApplicationName().c_str() );
+      wcscpy_s( g_szExitText, STRING_SIZE, g_xmlHelper.GetExitText().c_str() );
+   }
+
+   return success;
 }
 
 
-void GetExitText( LPWSTR szText, int cch )
-{
-   int baseId = GetBaseResourceId();
-
-   LoadStringW( g_hInst, baseId + 1, szText, cch );
-}
-
-
-void WriteLog( LPCTSTR lpszDebugOut, ... )
-{
-   TCHAR buf[1024]; 
-   va_list arg_list;
-
-   va_start( arg_list, lpszDebugOut );
-   _vstprintf( buf, lpszDebugOut, arg_list );
-   va_end( arg_list );
-
-#ifdef _UNICODE
-   FILE* file = _wfopen( _T("c:\\log.txt"), _T("a+") );
-   fwprintf( file, _T("%s"), buf );
-   fclose( file );
-#else
-   FILE* file = fopen( _T("c:\\log.txt"), _T("a+") );
-   fprintf( file, _T("%s"), buf );
-   fclose( file );
-#endif
-}

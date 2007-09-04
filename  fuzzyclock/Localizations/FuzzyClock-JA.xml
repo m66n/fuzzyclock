@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<fuzzy_clock>
+   <application_name>ファジー時計</application_name>
+   <exit_text>終了</exit_text>
+   <hours_text>
+      <hour_text index="0">1</hour_text>
+      <hour_text index="1">2</hour_text>
+      <hour_text index="2">3</hour_text>
+      <hour_text index="3">4</hour_text>
+      <hour_text index="4">5</hour_text>
+      <hour_text index="5">6</hour_text>
+      <hour_text index="6">7</hour_text>
+      <hour_text index="7">8</hour_text>
+      <hour_text index="8">9</hour_text>
+      <hour_text index="9">10</hour_text>
+      <hour_text index="10">11</hour_text>
+      <hour_text index="11">12</hour_text>
+   </hours_text>
+   <times_text>
+      <time_text index="0">%0時</time_text>
+      <time_text index="1">%0時5分過ぎ</time_text>
+      <time_text index="2">%0時10分過ぎ</time_text>
+      <time_text index="3">%0時15分過ぎ</time_text>
+      <time_text index="4">%0時20分過ぎ</time_text>
+      <time_text index="5">%0時25分過ぎ</time_text>
+      <time_text index="6">%0時半</time_text>
+      <time_text index="7">%1時25分前</time_text>
+      <time_text index="8">%1時20分前</time_text>
+      <time_text index="9">%1時15分前</time_text>
+      <time_text index="10">%1時10分前</time_text>
+      <time_text index="11">%1時5分前</time_text>
+      <time_text index="12">%1時</time_text>
+   </times_text>
+</fuzzy_clock>

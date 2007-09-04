@@ -20,24 +20,25 @@
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-// The following ifdef block is the standard way of creating macros which make exporting 
-// from a DLL simpler. All files within this DLL are compiled with the FUZZYHOOK_EXPORTS
-// symbol defined on the command line. this symbol should not be defined on any project
-// that uses this DLL. This way any other project whose source files include this file see 
-// FUZZYHOOK_API functions as being imported from a DLL, whereas this DLL sees symbols
-// defined with this macro as being exported.
-//
-#ifdef FUZZYHOOK_EXPORTS
-#define FUZZYHOOK_API __declspec(dllexport)
+#pragma once
+
+
+static void WriteLog( LPCTSTR lpszDebugOut, ... )
+{
+   TCHAR buf[1024]; 
+   va_list arg_list;
+
+   va_start( arg_list, lpszDebugOut );
+   _vstprintf( buf, lpszDebugOut, arg_list );
+   va_end( arg_list );
+
+#ifdef _UNICODE
+   FILE* file = _wfopen( L"c:\\log.txt", L"a+" );
+   fwprintf( file, L"%s", buf );
+   fclose( file );
 #else
-#define FUZZYHOOK_API __declspec(dllimport)
+   FILE* file = fopen( "c:\\log.txt", "a+" );
+   fprintf( file, "%s", buf );
+   fclose( file );
 #endif
-
-
-FUZZYHOOK_API BOOL Hook( HWND, LPCWSTR );
-FUZZYHOOK_API BOOL Unhook();
-
-FUZZYHOOK_API void ResetText( LPCWSTR );
-
-FUZZYHOOK_API void GetApplicationName( LPWSTR, int );
-FUZZYHOOK_API void GetExitText( LPWSTR, int );
+}

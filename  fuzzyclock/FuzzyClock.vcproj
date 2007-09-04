@@ -227,6 +227,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\idr_xmldefault.bin"
+				>
+			</File>
+			<File
 				RelativePath=".\small.ico"
 				>
 			</File>

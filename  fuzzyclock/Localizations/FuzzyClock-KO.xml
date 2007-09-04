@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<fuzzy_clock>
+   <application_name>퍼지 시계</application_name>
+   <exit_text>끝내기</exit_text>
+   <hours_text>
+      <hour_text index="0">한</hour_text>
+      <hour_text index="1">두</hour_text>
+      <hour_text index="2">세</hour_text>
+      <hour_text index="3">네</hour_text>
+      <hour_text index="4">다섯</hour_text>
+      <hour_text index="5">여섯</hour_text>
+      <hour_text index="6">일곱</hour_text>
+      <hour_text index="7">여덟</hour_text>
+      <hour_text index="8">아홉</hour_text>
+      <hour_text index="9">열</hour_text>
+      <hour_text index="10">열 한</hour_text>
+      <hour_text index="11">열 두</hour_text>
+   </hours_text>
+   <times_text>
+      <time_text index="0">%0 시</time_text>
+      <time_text index="1">오분 지난 %0 시</time_text>
+      <time_text index="2">십분 지난 %0 시</time_text>
+      <time_text index="3">십 오분 지난 %0 시</time_text>
+      <time_text index="4">이십분 시난 %0 시</time_text>
+      <time_text index="5">이십 오분 지난 %0 시</time_text>
+      <time_text index="6">%0 시에서 반 지남</time_text>
+      <time_text index="7">이십 오분 전 %1 시</time_text>
+      <time_text index="8">이십분 전 %1 시</time_text>
+      <time_text index="9">십 오분 전 %1 시</time_text>
+      <time_text index="10">십분 전 %1 시</time_text>
+      <time_text index="11">오분 전 %1 시</time_text>
+      <time_text index="12">%1 시</time_text>
+   </times_text>
+</fuzzy_clock>

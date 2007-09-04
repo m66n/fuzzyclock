@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<fuzzy_clock>
+   <application_name>Upræcist Ur</application_name>
+   <exit_text>Afslut</exit_text>
+   <hours_text>
+      <hour_text index="0">ét</hour_text>
+      <hour_text index="1">to</hour_text>
+      <hour_text index="2">tre</hour_text>
+      <hour_text index="3">fire</hour_text>
+      <hour_text index="4">fem</hour_text>
+      <hour_text index="5">seks</hour_text>
+      <hour_text index="6">syv</hour_text>
+      <hour_text index="7">otte</hour_text>
+      <hour_text index="8">ni</hour_text>
+      <hour_text index="9">ti</hour_text>
+      <hour_text index="10">elleve</hour_text>
+      <hour_text index="11">tolv</hour_text>
+   </hours_text>
+   <times_text>
+      <time_text index="0">klokken %0</time_text>
+      <time_text index="1">fem minutter over %0</time_text>
+      <time_text index="2">ti minutter over %0</time_text>
+      <time_text index="3">kvart over %0</time_text>
+      <time_text index="4">tyve minutter over %0</time_text>
+      <time_text index="5">fem minutter i halv %1</time_text>
+      <time_text index="6">klokken halv %1</time_text>
+      <time_text index="7">fem minutter over halv %1</time_text>
+      <time_text index="8">tyve minutter i %1</time_text>
+      <time_text index="9">kvart i %1</time_text>
+      <time_text index="10">ti minutter i %1</time_text>
+      <time_text index="11">fem minutter i %1</time_text>
+      <time_text index="12">klokken %1</time_text>
+   </times_text>
+</fuzzy_clock>

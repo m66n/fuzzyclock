@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<fuzzy_clock>
+   <application_name>Különleges</application_name>
+   <exit_text>Kilépés</exit_text>
+   <hours_text>
+      <hour_text index="0">egy</hour_text>
+      <hour_text index="1">kettő</hour_text>
+      <hour_text index="2">három</hour_text>
+      <hour_text index="3">négy</hour_text>
+      <hour_text index="4">öt</hour_text>
+      <hour_text index="5">hat</hour_text>
+      <hour_text index="6">hét</hour_text>
+      <hour_text index="7">nyolc</hour_text>
+      <hour_text index="8">kilenc</hour_text>
+      <hour_text index="9">tíz</hour_text>
+      <hour_text index="10">tizenegy</hour_text>
+      <hour_text index="11">tizenkettő</hour_text>
+   </hours_text>
+   <times_text>
+      <time_text index="0">pontosan %0 óra</time_text>
+      <time_text index="1">öt perccel múlt %0</time_text>
+      <time_text index="2">tíz perccel múlt %0</time_text>
+      <time_text index="3">negyed %1</time_text>
+      <time_text index="4">5 perccel múlt negyed %1</time_text>
+      <time_text index="5">öt perc múlva fél %1</time_text>
+      <time_text index="6">fél %1</time_text>
+      <time_text index="7">öt perccel múlt fél %1</time_text>
+      <time_text index="8">öt perc múlva háromnegyed %1</time_text>
+      <time_text index="9">háromnegyed %1</time_text>
+      <time_text index="10">tíz perc múlva %1</time_text>
+      <time_text index="11">öt perc múlva %1</time_text>
+      <time_text index="12">pontosan %1 óra</time_text>
+   </times_text>
+</fuzzy_clock>

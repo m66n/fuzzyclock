@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<fuzzy_clock>
+   <application_name>Relógio Estranho</application_name>
+   <exit_text>Sair</exit_text>
+   <hours_text>
+      <hour_text index="0">uma</hour_text>
+      <hour_text index="1">duas</hour_text>
+      <hour_text index="2">três</hour_text>
+      <hour_text index="3">quatro</hour_text>
+      <hour_text index="4">cinco</hour_text>
+      <hour_text index="5">seis</hour_text>
+      <hour_text index="6">sete</hour_text>
+      <hour_text index="7">oito</hour_text>
+      <hour_text index="8">nove</hour_text>
+      <hour_text index="9">dez</hour_text>
+      <hour_text index="10">onze</hour_text>
+      <hour_text index="11">doze</hour_text>
+   </hours_text>
+   <times_text>
+      <time_text index="0">%0 horas</time_text>
+      <time_text index="1">%0 e cinco</time_text>
+      <time_text index="2">%0 e dez</time_text>
+      <time_text index="3">%0 e um quarto</time_text>
+      <time_text index="4">%0 e vinte</time_text>
+      <time_text index="5">%0 e vinte e cinco</time_text>
+      <time_text index="6">%0 e meia</time_text>
+      <time_text index="7">vinte e cinco para as %1</time_text>
+      <time_text index="8">vinte para as %1</time_text>
+      <time_text index="9">um quarto para as %1</time_text>
+      <time_text index="10">dez para as %1</time_text>
+      <time_text index="11">cinco para as %1</time_text>
+      <time_text index="12">%1 horas</time_text>
+   </times_text>
+</fuzzy_clock>

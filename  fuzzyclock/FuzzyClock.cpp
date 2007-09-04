@@ -24,6 +24,14 @@
 #include "resource.h"
 #include "./FuzzyHook/FuzzyHook.h"
 #include <ShellAPI.h>
+#include <vector>
+#include <string>
+
+#ifdef _UNICODE
+typedef std::wstring tstring;
+#else
+typedef std::string tstring;
+#endif
 
 #define MAX_LOADSTRING 100
 
@@ -48,6 +56,8 @@ BOOL AddTrayIcon( HWND, LPCWSTR, HICON, UINT );
 BOOL RemoveTrayIcon();
 LRESULT OnTrayIcon( WPARAM, LPARAM );
 HWND GetTrayClock();
+tstring GetXMLFile();
+tstring GetDefaultXMLFile( LPCTSTR );
 
 
 int APIENTRY _tWinMain( HINSTANCE hInstance,
@@ -58,10 +68,11 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
    UNREFERENCED_PARAMETER( hPrevInstance );
    UNREFERENCED_PARAMETER( lpCmdLine );
 
-   HANDLE hMutexSingleInstance = CreateMutex( NULL, FALSE, _T("FuzzyClock__8E5405E2_BD48_41cd_AAF4_C7183EA13CBB") );
+   HANDLE hMutexSingleInstance = CreateMutex( NULL, FALSE,
+      _T("FuzzyClock__8E5405E2_BD48_41cd_AAF4_C7183EA13CBB") );
 
    if ( GetLastError() == ERROR_ALREADY_EXISTS ||
-      GetLastError() == ERROR_ACCESS_DENIED )
+        GetLastError() == ERROR_ACCESS_DENIED )
    {
       return FALSE;
    }
@@ -76,11 +87,19 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
       return FALSE;
    }
 
-   Hook( GetTrayClock() );
+   tstring xmlFile = GetXMLFile();
+
+   if ( xmlFile.empty() )
+   {
+      return FALSE;
+   }
+
+   Hook( GetTrayClock(), xmlFile.c_str() );
 
    MSG msg;
 
-   HICON hTrayIcon = reinterpret_cast<HICON>( LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ), IMAGE_ICON, 0, 0, 0 ) );
+   HICON hTrayIcon = (HICON)LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ),
+      IMAGE_ICON, 0, 0, 0 );
 
    wchar_t szName[64];
    GetApplicationName( szName, 64 );
@@ -99,7 +118,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
 
    Unhook();
 
-   return static_cast<int>( msg.wParam );
+   return (int)msg.wParam;
 }
 
 
@@ -310,4 +329,100 @@ HWND GetTrayClock()
    }
 
    return hWndTrayClock;
+}
+
+
+tstring GetXMLFile()
+{
+   WIN32_FIND_DATAW findFileData;
+
+   DWORD numChars = GetCurrentDirectory( 0, NULL );
+
+   std::vector<TCHAR> szDirectory( numChars );
+
+   if ( GetCurrentDirectory( numChars, &szDirectory[0] ) != ( numChars - 1 ) )
+   {
+      return _T("");
+   }
+
+   tstring strDirectory( &szDirectory[0] );
+
+   tstring strFilePath = strDirectory + _T("\\") + _T("FuzzyClock.xml");
+
+   HANDLE hFind = FindFirstFile( strFilePath.c_str(), &findFileData );
+
+   if ( INVALID_HANDLE_VALUE == hFind )
+   {
+      return GetDefaultXMLFile( strFilePath.c_str() );
+   }
+
+   FindClose( hFind );
+
+   return strFilePath;
+}
+
+
+tstring GetDefaultXMLFile( LPCTSTR szDefaultPath )
+{
+   TCHAR szResourceID[16];
+   szResourceID[0] = _T('#');
+   _itot_s( IDR_XMLDEFAULT, &szResourceID[1], 15, 10 );
+
+   LPCTSTR szResourceType = _T("XMLFILE");
+
+   HRSRC hres = FindResource( NULL, szResourceID, szResourceType );
+
+   if ( NULL == hres )
+   {
+      return _T("");
+   }
+
+   DWORD sizeResource = SizeofResource( NULL, hres );
+
+   HGLOBAL hbytes = LoadResource( NULL, hres );
+
+   LPVOID pData = LockResource( hbytes );
+
+   tstring strFilePath;
+
+   HANDLE hfile = CreateFile( szDefaultPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+      CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+
+   if ( INVALID_HANDLE_VALUE == hfile )
+   {
+      int numChars = GetTempPath( 0, NULL );
+
+      std::vector<TCHAR> szTempDir( numChars );
+
+      if ( GetTempPath( numChars, &szTempDir[0] ) != ( numChars - 1 ) )
+      {
+         return _T("");
+      }
+
+      TCHAR szTempFileName[MAX_PATH+1];
+
+      GetTempFileName( &szTempDir[0], _T("FUZ"), 0, szTempFileName );
+
+      hfile = CreateFile( szTempFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+
+      if ( INVALID_HANDLE_VALUE == hfile )
+      {
+         return _T("");
+      }
+
+      strFilePath = szTempFileName;
+   }
+   else
+   {
+      strFilePath = szDefaultPath;
+   }
+
+   DWORD dwBytesWritten = 0;
+
+   WriteFile( hfile, pData, sizeResource, &dwBytesWritten, NULL );
+
+   CloseHandle( hfile );
+
+   return strFilePath;
 }
