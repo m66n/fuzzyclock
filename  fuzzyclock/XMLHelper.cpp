@@ -62,35 +62,27 @@ bool XMLHelper::LoadFile( LPCWSTR szFileName )
       {
          MSXML::IXMLDOMNodePtr pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//application_name" );
 
-         bool success = ParseApplicationName( pNode );
-
-         if ( !success )
+         if ( !ParseApplicationName( pNode ) )
          {
             return false;
          }
 
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//exit_text" );
 
-         success = ParseExitText( pNode );
-
-         if ( !success )
+         if ( !ParseExitText( pNode ) )
          {
             return false;
          }
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//hours_text" );
 
-         success = ParseHoursText( pNode );
-
-         if ( !success )
+         if ( !ParseHoursText( pNode ) )
          {
            return false;
          }
 
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//times_text" );
 
-         success = ParseTimesText( pNode );
-
-         return success;
+         return ParseTimesText( pNode );
       }
       else
       {

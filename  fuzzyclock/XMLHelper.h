@@ -20,7 +20,6 @@
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-
 #pragma once
 
 #include <string>
@@ -40,11 +39,11 @@ public:
 
    const std::wstring& GetApplicationName() const { return applicationName_; }
    const std::wstring& GetExitText() const { return exitText_; }
-   const std::wstring& GetHourText( int index ) { return hoursText_[index]; }
-   const std::wstring& GetTimeText( int index ) { return timesText_[index]; }
+   const std::wstring& GetHourText( int index ) const { return hoursText_[index]; }
+   const std::wstring& GetTimeText( int index ) const { return timesText_[index]; }
 
-   size_t GetHoursTextCount() { return hoursText_.size(); }
-   size_t GetTimesTextCount() { return timesText_.size(); }
+   size_t GetHoursTextCount() const { return hoursText_.size(); }
+   size_t GetTimesTextCount() const { return timesText_.size(); }
 
 private:
 

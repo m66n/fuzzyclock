@@ -50,17 +50,19 @@ NOTIFYICONDATAW g_nid;
 XMLHelper g_xmlHelper;
 
 const UINT RWM_TRAYICON = RegisterWindowMessage( _T("RWM_TRAYICON__C363ED38_3BEA_477b_B407_2A235F89F4E7") );
+const UINT RWM_LOADXML = RegisterWindowMessage( _T("RWM_LOADXML__99F64DE5_A6DB_4e37_BF81_042F81EE2BA0") );
 
 
-ATOM RegisterWindow( HINSTANCE );
-BOOL InitInstance( HINSTANCE, int );
-LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 BOOL AddTrayIcon( HWND, LPCWSTR, HICON, UINT );
-BOOL RemoveTrayIcon();
-LRESULT OnTrayIcon( WPARAM, LPARAM );
+tstring GetDefaultXMLFile( LPCTSTR );
 HWND GetTrayClock();
 tstring GetXMLFile();
-tstring GetDefaultXMLFile( LPCTSTR );
+BOOL InitInstance( HINSTANCE, int );
+LRESULT OnTrayIcon( WPARAM, LPARAM );
+BOOL ProcessXMLFile( LPCWSTR );
+ATOM RegisterWindow( HINSTANCE );
+BOOL RemoveTrayIcon();
+LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 
 
 int APIENTRY _tWinMain( HINSTANCE hInstance,
@@ -97,19 +99,9 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
       return FALSE;
    }
 
-   if ( !g_xmlHelper.LoadFile( xmlFile.c_str() ) )
+   if ( !ProcessXMLFile( xmlFile.c_str() ) )
    {
       return FALSE;
-   }
-
-   for ( UINT index = 0; index < g_xmlHelper.GetHoursTextCount(); ++index )
-   {
-      SetHourText( index, g_xmlHelper.GetHourText( index ).c_str() );
-   }
-
-   for ( UINT index = 0; index < g_xmlHelper.GetTimesTextCount(); ++index )
-   {
-      SetTimeText( index, g_xmlHelper.GetTimeText( index ).c_str() );
    }
 
    Hook( GetTrayClock() );
@@ -174,6 +166,27 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 
    ShowWindow( g_hWnd, SW_HIDE );
    UpdateWindow( g_hWnd );
+
+   return TRUE;
+}
+
+
+BOOL ProcessXMLFile( LPCWSTR szFilePath )
+{
+   if ( !g_xmlHelper.LoadFile( szFilePath ) )
+   {
+      return FALSE;
+   }
+
+   for ( UINT index = 0; index < g_xmlHelper.GetHoursTextCount(); ++index )
+   {
+      SetHourText( index, g_xmlHelper.GetHourText( index ).c_str() );
+   }
+
+   for ( UINT index = 0; index < g_xmlHelper.GetTimesTextCount(); ++index )
+   {
+      SetTimeText( index, g_xmlHelper.GetTimeText( index ).c_str() );
+   }
 
    return TRUE;
 }

@@ -23,7 +23,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "FuzzyHook.h"
-#include "WriteLog.h"
+//#include "WriteLog.h"  // for debugging
 #include <string>
 #include <vector>
 
@@ -34,8 +34,8 @@ UINT RWM_FUZZYHOOK = 0;
 UINT RWM_RESET = 0;
 HWND g_hWnd	= NULL;
 HHOOK g_hHook = NULL;
-wchar_t g_szHoursText[STRING_SIZE * HT_COUNT] = L"";
-wchar_t g_szTimesText[STRING_SIZE * TT_COUNT] = L"";
+wchar_t g_szHoursText[HT_STRING_SIZE * HT_COUNT] = L"";
+wchar_t g_szTimesText[TT_STRING_SIZE * TT_COUNT] = L"";
 #pragma data_seg()
 
 #pragma comment(linker,"/SECTION:.fuzzy,RWS")
@@ -131,11 +131,7 @@ FUZZYHOOK_API void SetHourText( int index, LPCWSTR szHourText )
 {
    if ( index >= 0 && index < HT_COUNT )
    {
-      wcscpy_s( &g_szHoursText[index * STRING_SIZE], STRING_SIZE, szHourText );
-   }
-   else
-   {
-      g_szHoursText[index * STRING_SIZE] = L'\0';
+      wcscpy_s( &g_szHoursText[index * HT_STRING_SIZE], HT_STRING_SIZE, szHourText );
    }
 }
 
@@ -144,11 +140,7 @@ FUZZYHOOK_API void SetTimeText( int index, LPCWSTR szTimeText )
 {
    if ( index >= 0 && index < TT_COUNT )
    {
-      wcscpy_s( &g_szTimesText[index * STRING_SIZE], STRING_SIZE, szTimeText );
-   }
-   else
-   {
-      g_szTimesText[index * STRING_SIZE] = L'\0';
+      wcscpy_s( &g_szTimesText[index * TT_STRING_SIZE], TT_STRING_SIZE, szTimeText );
    }
 }
 
@@ -281,7 +273,7 @@ std::wstring TimeString()
       sector = ( minute - 3 ) / 5 + 1;
    }
 
-   std::wstring timeString( &g_szTimesText[sector * STRING_SIZE] );
+   std::wstring timeString( &g_szTimesText[sector * TT_STRING_SIZE] );
 
    size_t startIndex = timeString.find( L"%" );
 
@@ -307,7 +299,7 @@ std::wstring TimeString()
          realHour = 12 - ( ( systemTime.wHour + deltaHour ) % 12 + 1 );
       }
 
-      timeString.replace( startIndex, fieldLength, &g_szHoursText[realHour * STRING_SIZE] );
+      timeString.replace( startIndex, fieldLength, &g_szHoursText[realHour * HT_STRING_SIZE] );
 
       timeString.replace( 0, 1, 1, _totupper( timeString.at( 0 ) ) );
    }
