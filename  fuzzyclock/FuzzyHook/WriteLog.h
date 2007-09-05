@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <stdio.h>
+
 
 static void WriteLog( LPCTSTR lpszDebugOut, ... )
 {

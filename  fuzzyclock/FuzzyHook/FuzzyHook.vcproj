@@ -203,10 +203,6 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\XMLHelper.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -227,10 +223,6 @@
 			</File>
 			<File
 				RelativePath=".\WriteLog.h"
-				>
-			</File>
-			<File
-				RelativePath=".\XMLHelper.h"
 				>
 			</File>
 		</Filter>

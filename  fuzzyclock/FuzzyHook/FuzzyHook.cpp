@@ -23,24 +23,19 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "FuzzyHook.h"
-#include "XMLHelper.h"
 #include "WriteLog.h"
 #include <string>
 #include <vector>
 
 
-#define STRING_SIZE 64
-
-
 #pragma data_seg(".fuzzy")
 BOOL g_subclassed = FALSE;
 UINT RWM_FUZZYHOOK = 0;
-UINT RWM_RESETTEXT = 0;
+UINT RWM_RESET = 0;
 HWND g_hWnd	= NULL;
 HHOOK g_hHook = NULL;
-wchar_t g_szXMLFile[MAX_PATH+1] = L"";
-wchar_t g_szApplicationName[STRING_SIZE] = L"";
-wchar_t g_szExitText[STRING_SIZE] = L"";
+wchar_t g_szHoursText[STRING_SIZE * HT_COUNT] = L"";
+wchar_t g_szTimesText[STRING_SIZE * TT_COUNT] = L"";
 #pragma data_seg()
 
 #pragma comment(linker,"/SECTION:.fuzzy,RWS")
@@ -65,8 +60,6 @@ HBITMAP g_hbmpClock = NULL;
 HDC g_hdcClockBackground = NULL;
 HBITMAP g_hbmpClockBackground = NULL;
 
-XMLHelper g_xmlHelper;
-
 
 LRESULT CalculateWindowSize( HWND );
 void Cleanup();
@@ -75,13 +68,11 @@ void CopyParentSurface( HWND, HDC, int, int, int, int, int, int );
 bool CreateClockHDC( HWND );
 bool CreateMemoryDC( HDC, HDC&, HBITMAP&, int, int );
 void DrawFuzzyClock( HWND, HDC );
-int GetBaseResourceId();
 void GetTextSize( HDC, LPCWSTR, TEXTMETRIC&, SIZE& );
 COLORREF GetThemeForeColor();
 LRESULT _stdcall HookProc( int, WPARAM, LPARAM );
 void Initialize();
 LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
-bool ParseXML();
 void RefreshTaskbar( HWND );
 std::wstring TimeString();
 
@@ -98,7 +89,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
       if ( 0 == RWM_FUZZYHOOK )
       {
          RWM_FUZZYHOOK = RegisterWindowMessage( _T("RWM_FUZZYHOOK__B78C168A_5AE4_405c_A8B6_B30FB917567A") );
-         RWM_RESETTEXT = RegisterWindowMessage( _T("RWM_RESETTEXT__AD6337A5_5544_48cd_9C29_B9768DC467D3") );
+         RWM_RESET = RegisterWindowMessage( _T("RWM_RESET__AD6337A5_5544_48cd_9C29_B9768DC467D3") );
       }
    }
 
@@ -106,11 +97,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 }
 
 
-FUZZYHOOK_API BOOL Hook( HWND hWnd, LPCWSTR szXMLFile )
+FUZZYHOOK_API BOOL Hook( HWND hWnd )
 {
    g_hWnd = hWnd;
-
-   wcscpy_s( g_szXMLFile, MAX_PATH, szXMLFile );
 
    g_hHook = SetWindowsHookEx( WH_CALLWNDPROC,(HOOKPROC)HookProc, g_hInst, GetWindowThreadProcessId( hWnd, NULL ) );
 
@@ -138,23 +127,35 @@ FUZZYHOOK_API BOOL Unhook()
 }
 
 
-FUZZYHOOK_API void ResetText( LPCWSTR szXMLFile )
+FUZZYHOOK_API void SetHourText( int index, LPCWSTR szHourText )
 {
-   wcscpy_s( g_szXMLFile, MAX_PATH, szXMLFile );
-   SendMessage( g_hWnd, RWM_RESETTEXT, 0, 0 );
+   if ( index >= 0 && index < HT_COUNT )
+   {
+      wcscpy_s( &g_szHoursText[index * STRING_SIZE], STRING_SIZE, szHourText );
+   }
+   else
+   {
+      g_szHoursText[index * STRING_SIZE] = L'\0';
+   }
+}
+
+
+FUZZYHOOK_API void SetTimeText( int index, LPCWSTR szTimeText )
+{
+   if ( index >= 0 && index < TT_COUNT )
+   {
+      wcscpy_s( &g_szTimesText[index * STRING_SIZE], STRING_SIZE, szTimeText );
+   }
+   else
+   {
+      g_szTimesText[index * STRING_SIZE] = L'\0';
+   }
+}
+
+
+FUZZYHOOK_API void Invalidate()
+{
    PostMessage( g_hWnd, WM_SIZE, SIZE_RESTORED, 0 );
-}
-
-
-FUZZYHOOK_API void GetApplicationName( LPWSTR szName, int cch )
-{
-   wcscpy_s( szName, min( cch, STRING_SIZE ), g_szApplicationName );
-}
-
-
-FUZZYHOOK_API void GetExitText( LPWSTR szText, int cch )
-{
-   wcscpy_s( szText, min( cch, STRING_SIZE ), g_szExitText );
 }
 
 
@@ -216,11 +217,6 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
       return 0;
    }
 
-   if ( message == RWM_RESETTEXT )
-   {
-      ParseXML();
-   }
-
    switch ( message )
    {
    case WM_PAINT:
@@ -272,8 +268,6 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
 std::wstring TimeString()
 {
-   std::wstring timeString;
-
    SYSTEMTIME systemTime;
 
    GetLocalTime( &systemTime );
@@ -287,7 +281,7 @@ std::wstring TimeString()
       sector = ( minute - 3 ) / 5 + 1;
    }
 
-   timeString = g_xmlHelper.GetTimeText( sector );
+   std::wstring timeString( &g_szTimesText[sector * STRING_SIZE] );
 
    size_t startIndex = timeString.find( L"%" );
 
@@ -313,7 +307,7 @@ std::wstring TimeString()
          realHour = 12 - ( ( systemTime.wHour + deltaHour ) % 12 + 1 );
       }
 
-      timeString.replace( startIndex, fieldLength, g_xmlHelper.GetHourText( realHour ) );
+      timeString.replace( startIndex, fieldLength, &g_szHoursText[realHour * STRING_SIZE] );
 
       timeString.replace( 0, 1, 1, _totupper( timeString.at( 0 ) ) );
    }
@@ -451,8 +445,6 @@ void Initialize()
    lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 
    g_hFont = CreateFontIndirect( &lf );
-
-   ParseXML();
 }
 
 
@@ -681,19 +673,4 @@ COLORREF GetThemeForeColor()
 
    return clr;
 }
-
-
-bool ParseXML()
-{
-   bool success = g_xmlHelper.LoadFile( g_szXMLFile );
-
-   if ( success )
-   {
-      wcscpy_s( g_szApplicationName, STRING_SIZE, g_xmlHelper.GetApplicationName().c_str() );
-      wcscpy_s( g_szExitText, STRING_SIZE, g_xmlHelper.GetExitText().c_str() );
-   }
-
-   return success;
-}
-
 

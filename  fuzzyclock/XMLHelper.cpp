@@ -22,7 +22,6 @@
 
 #include "stdafx.h"
 #include "XMLHelper.h"
-#include "WriteLog.h"
 
 #import <msxml.dll>
 
@@ -63,21 +62,35 @@ bool XMLHelper::LoadFile( LPCWSTR szFileName )
       {
          MSXML::IXMLDOMNodePtr pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//application_name" );
 
-         ParseApplicationName( pNode );
+         bool success = ParseApplicationName( pNode );
+
+         if ( !success )
+         {
+            return false;
+         }
 
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//exit_text" );
 
-         ParseExitText( pNode );
+         success = ParseExitText( pNode );
 
+         if ( !success )
+         {
+            return false;
+         }
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//hours_text" );
 
-         ParseHoursText( pNode );
+         success = ParseHoursText( pNode );
+
+         if ( !success )
+         {
+           return false;
+         }
 
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//times_text" );
 
-         ParseTimesText( pNode );
+         success = ParseTimesText( pNode );
 
-         return true;
+         return success;
       }
       else
       {

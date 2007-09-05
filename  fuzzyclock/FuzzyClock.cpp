@@ -23,6 +23,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "./FuzzyHook/FuzzyHook.h"
+#include "XMLHelper.h"
 #include <ShellAPI.h>
 #include <vector>
 #include <string>
@@ -45,6 +46,8 @@ HWND g_hWnd;
 TCHAR g_szTitle[MAX_LOADSTRING];
 TCHAR g_szWindowClass[MAX_LOADSTRING];
 NOTIFYICONDATAW g_nid;
+
+XMLHelper g_xmlHelper;
 
 const UINT RWM_TRAYICON = RegisterWindowMessage( _T("RWM_TRAYICON__C363ED38_3BEA_477b_B407_2A235F89F4E7") );
 
@@ -94,16 +97,29 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
       return FALSE;
    }
 
-   Hook( GetTrayClock(), xmlFile.c_str() );
+   if ( !g_xmlHelper.LoadFile( xmlFile.c_str() ) )
+   {
+      return FALSE;
+   }
+
+   for ( UINT index = 0; index < g_xmlHelper.GetHoursTextCount(); ++index )
+   {
+      SetHourText( index, g_xmlHelper.GetHourText( index ).c_str() );
+   }
+
+   for ( UINT index = 0; index < g_xmlHelper.GetTimesTextCount(); ++index )
+   {
+      SetTimeText( index, g_xmlHelper.GetTimeText( index ).c_str() );
+   }
+
+   Hook( GetTrayClock() );
 
    MSG msg;
 
    HICON hTrayIcon = (HICON)LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ),
       IMAGE_ICON, 0, 0, 0 );
 
-   wchar_t szName[64];
-   GetApplicationName( szName, 64 );
-   AddTrayIcon( g_hWnd, szName, hTrayIcon, IDR_TRAYMENU );
+   AddTrayIcon( g_hWnd, g_xmlHelper.GetApplicationName().c_str(), hTrayIcon, IDR_TRAYMENU );
 
    SetProcessWorkingSetSize( GetCurrentProcess(), -1, -1 );
 
@@ -264,7 +280,7 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
          SetMenuDefaultItem( hPopupMenu, 0, TRUE );
 
          wchar_t buffer[64];
-         GetExitText( buffer, 64 );
+         wcscpy_s( buffer, 64, g_xmlHelper.GetExitText().c_str() );
 
          MENUITEMINFOW mii;
          mii.cbSize = sizeof( MENUITEMINFOW );

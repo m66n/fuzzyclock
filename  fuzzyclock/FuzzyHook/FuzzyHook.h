@@ -20,6 +20,11 @@
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+#define STRING_SIZE 64
+#define HT_COUNT 12
+#define TT_COUNT 13
+
+
 // The following ifdef block is the standard way of creating macros which make exporting 
 // from a DLL simpler. All files within this DLL are compiled with the FUZZYHOOK_EXPORTS
 // symbol defined on the command line. this symbol should not be defined on any project
@@ -34,10 +39,10 @@
 #endif
 
 
-FUZZYHOOK_API BOOL Hook( HWND, LPCWSTR );
+FUZZYHOOK_API BOOL Hook( HWND );
 FUZZYHOOK_API BOOL Unhook();
 
-FUZZYHOOK_API void ResetText( LPCWSTR );
+FUZZYHOOK_API void SetHourText( int index, LPCWSTR szHourText );
+FUZZYHOOK_API void SetTimeText( int index, LPCWSTR szTimeText );
 
-FUZZYHOOK_API void GetApplicationName( LPWSTR, int );
-FUZZYHOOK_API void GetExitText( LPWSTR, int );
+FUZZYHOOK_API void Invalidate();

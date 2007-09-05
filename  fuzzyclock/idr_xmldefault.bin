@@ -1,4 +1,4 @@
-ï»¿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <fuzzy_clock>
    <application_name>FuzzyClock</application_name>
    <exit_text>Exit</exit_text>
@@ -17,7 +17,7 @@
       <hour_text index="11">twelve</hour_text>
    </hours_text>
    <times_text>
-      <time_text index="0">%0 oâ€™clock</time_text>
+      <time_text index="0">%0 o’clock</time_text>
       <time_text index="1">five past %0</time_text>
       <time_text index="2">ten past %0</time_text>
       <time_text index="3">quarter past %0</time_text>
@@ -29,6 +29,6 @@
       <time_text index="9">quarter to %1</time_text>
       <time_text index="10">ten to %1</time_text>
       <time_text index="11">five to %1</time_text>
-      <time_text index="12">%1 oâ€™clock</time_text>
+      <time_text index="12">%1 o’clock</time_text>
    </times_text>
 </fuzzy_clock>
