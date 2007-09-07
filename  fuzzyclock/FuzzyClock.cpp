@@ -362,17 +362,18 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
          SetMenuDefaultItem( hPopupMenu, 0, TRUE );
 
          wchar_t buffer[64];
-         wcscpy_s( buffer, 64, g_xmlHelper.GetExitText().c_str() );
 
          MENUITEMINFOW mii;
          mii.cbSize = sizeof( MENUITEMINFOW );
+         mii.dwTypeData = buffer;
+         mii.cch = 64;
 
          GetMenuItemInfoW( hPopupMenu, 0, TRUE, &mii );
 
          mii.fMask = MIIM_TYPE;
          mii.fType = MFT_STRING;
-         mii.dwTypeData = buffer;
-         mii.cch = (UINT)wcslen( buffer );
+
+         wcscpy_s( buffer, 64, g_xmlHelper.GetExitText().c_str() );
 
          SetMenuItemInfoW( hPopupMenu, 0, TRUE, &mii );
 

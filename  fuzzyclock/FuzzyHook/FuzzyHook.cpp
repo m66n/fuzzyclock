@@ -26,8 +26,6 @@
 //#include "WriteLog.h"  // for debugging
 #include <string>
 #include <vector>
-#include <cctype>
-#include <algorithm>
 
 
 #pragma data_seg(".fuzzy")
