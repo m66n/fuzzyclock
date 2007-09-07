@@ -303,7 +303,12 @@ std::wstring TimeString()
 
       timeString.replace( startIndex, fieldLength, &g_szHoursText[realHour * HT_STRING_SIZE] );
 
-      transform( timeString.begin(), timeString.begin() + 1, timeString.begin(), toupper );
+      wchar_t capitalizedFirstChar[2];
+
+      LCMapStringW( LOCALE_SYSTEM_DEFAULT, LCMAP_UPPERCASE, timeString.c_str(), 1, capitalizedFirstChar, 2 );
+      capitalizedFirstChar[1] = L'\0';
+
+      timeString.replace( 0, 1, capitalizedFirstChar );
    }
 
    return timeString;

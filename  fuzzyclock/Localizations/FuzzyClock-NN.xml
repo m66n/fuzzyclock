@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <fuzzy_clock>
    <application_name>Diffusklokke</application_name>
    <exit_text>Avslutt</exit_text>
@@ -17,7 +17,7 @@
       <hour_text index="11">tolv</hour_text>
    </hours_text>
    <times_text>
-      <time_text index="0">0%</time_text>
+      <time_text index="0">%0</time_text>
       <time_text index="1">fem over %0</time_text>
       <time_text index="2">ti over %0</time_text>
       <time_text index="3">kvart over %0</time_text>
@@ -29,6 +29,6 @@
       <time_text index="9">kvart på %1</time_text>
       <time_text index="10">ti på %1</time_text>
       <time_text index="11">fem på %1</time_text>
-      <time_text index="12">1%</time_text>
+      <time_text index="12">%1</time_text>
    </times_text>
 </fuzzy_clock>
