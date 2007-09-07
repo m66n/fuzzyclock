@@ -35,6 +35,7 @@ typedef std::string tstring;
 #endif
 
 #define MAX_LOADSTRING 100
+#define LOAD_XML 32670
 
 #define SHELLTRAY_WNDCLASS _T("Shell_TrayWnd")
 #define TRAYNOTIFY_WNDCLASS _T("TrayNotifyWnd")
@@ -49,26 +50,29 @@ NOTIFYICONDATAW g_nid;
 
 XMLHelper g_xmlHelper;
 
+const UINT RWM_IDENTITY = RegisterWindowMessage( _T("RWM_IDENTITY__F4252D21_27F7_4d84_AE3B_48156BC571BC") );
 const UINT RWM_TRAYICON = RegisterWindowMessage( _T("RWM_TRAYICON__C363ED38_3BEA_477b_B407_2A235F89F4E7") );
-const UINT RWM_LOADXML = RegisterWindowMessage( _T("RWM_LOADXML__99F64DE5_A6DB_4e37_BF81_042F81EE2BA0") );
 
 
 BOOL AddTrayIcon( HWND, LPCWSTR, HICON, UINT );
+BOOL CALLBACK EnumWindowsProc( HWND, LPARAM );
 tstring GetDefaultXMLFile( LPCTSTR );
 HWND GetTrayClock();
 tstring GetXMLFile();
 BOOL InitInstance( HINSTANCE, int );
+LRESULT OnIdentity( WPARAM, LPARAM );
 LRESULT OnTrayIcon( WPARAM, LPARAM );
 BOOL ProcessXMLFile( LPCWSTR );
 ATOM RegisterWindow( HINSTANCE );
 BOOL RemoveTrayIcon();
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
+void SetTrayIconText( LPCWSTR );
 
 
 int APIENTRY _tWinMain( HINSTANCE hInstance,
-                        HINSTANCE hPrevInstance,
-                        LPTSTR    lpCmdLine,
-                        int       nCmdShow )
+                       HINSTANCE hPrevInstance,
+                       LPTSTR    lpCmdLine,
+                       int       nCmdShow )
 {
    UNREFERENCED_PARAMETER( hPrevInstance );
    UNREFERENCED_PARAMETER( lpCmdLine );
@@ -77,8 +81,34 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
       _T("FuzzyClock__8E5405E2_BD48_41cd_AAF4_C7183EA13CBB") );
 
    if ( GetLastError() == ERROR_ALREADY_EXISTS ||
-        GetLastError() == ERROR_ACCESS_DENIED )
+      GetLastError() == ERROR_ACCESS_DENIED )
    {
+      HWND hRunning = NULL;
+
+      EnumWindows( EnumWindowsProc, (LPARAM)&hRunning );
+
+      if ( ( NULL != hRunning ) && ( _tcslen( lpCmdLine ) > 0 ) )
+      {
+         int argsCount = 0;
+
+         LPWSTR* szArgList = CommandLineToArgvW( GetCommandLineW(), &argsCount );
+
+         if ( argsCount > 1 )
+         {
+            COPYDATASTRUCT cds;
+
+            cds.dwData = LOAD_XML;
+            cds.cbData = ( (int)wcslen( szArgList[1] ) + 1 ) * sizeof( wchar_t );
+            cds.lpData = szArgList[1];
+
+            DWORD result = 0;
+            SendMessageTimeout( hRunning, WM_COPYDATA, 0, (LPARAM)&cds,
+               SMTO_BLOCK | SMTO_ABORTIFHUNG, 100, &result );
+         }
+
+         LocalFree( szArgList );
+      }
+
       return FALSE;
    }
 
@@ -127,6 +157,24 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
    Unhook();
 
    return (int)msg.wParam;
+}
+
+
+BOOL CALLBACK EnumWindowsProc( HWND hWnd, LPARAM lParam )
+{
+   DWORD result = 0;
+
+   BOOL success = (BOOL)SendMessageTimeout( hWnd, RWM_IDENTITY, 0, 0,
+      SMTO_BLOCK | SMTO_ABORTIFHUNG, 100, &result );
+
+   if ( success && RWM_IDENTITY == result )
+   {
+      HWND* pTarget = (HWND*)lParam;
+      *pTarget = hWnd;
+      return FALSE;  // window found.  stop search.
+   }
+
+   return TRUE;  // ignore this window and continue
 }
 
 
@@ -229,11 +277,32 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 
       PostQuitMessage( 0 );
       break;
+
+   case WM_COPYDATA:
+
+      PCOPYDATASTRUCT pCDS = (PCOPYDATASTRUCT)lParam;
+
+      if ( pCDS->dwData == LOAD_XML )
+      {
+         if ( ProcessXMLFile( (LPCWSTR)(pCDS->lpData) ) )
+         {
+            SetTrayIconText( g_xmlHelper.GetApplicationName().c_str() );
+            Invalidate();
+         }
+
+         return TRUE;
+      }
+
+      break;
    }
 
-   if ( message == RWM_TRAYICON )
+   if ( RWM_TRAYICON == message )
    {
       return OnTrayIcon( wParam, lParam );
+   }
+   else if ( RWM_IDENTITY == message )
+   {
+      return OnIdentity( wParam, lParam );
    }
 
    return DefWindowProc( hWnd, message, wParam, lParam );
@@ -454,4 +523,20 @@ tstring GetDefaultXMLFile( LPCTSTR szDefaultPath )
    CloseHandle( hfile );
 
    return strFilePath;
+}
+
+
+LRESULT OnIdentity( WPARAM wParam, LPARAM lParam )
+{
+   return RWM_IDENTITY;
+}
+
+
+void SetTrayIconText( LPCWSTR szText )
+{
+   g_nid.uFlags = NIF_TIP;
+
+   wcscpy_s( g_nid.szTip, sizeof( g_nid.szTip ), szText );
+
+   Shell_NotifyIconW( NIM_MODIFY, &g_nid );
 }
