@@ -26,6 +26,8 @@
 //#include "WriteLog.h"  // for debugging
 #include <string>
 #include <vector>
+#include <cctype>
+#include <algorithm>
 
 
 #pragma data_seg(".fuzzy")
@@ -301,7 +303,7 @@ std::wstring TimeString()
 
       timeString.replace( startIndex, fieldLength, &g_szHoursText[realHour * HT_STRING_SIZE] );
 
-      timeString.replace( 0, 1, 1, _totupper( timeString.at( 0 ) ) );
+      transform( timeString.begin(), timeString.begin() + 1, timeString.begin(), toupper );
    }
 
    return timeString;
