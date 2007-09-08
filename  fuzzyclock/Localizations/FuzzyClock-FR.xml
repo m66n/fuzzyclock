@@ -29,6 +29,6 @@
       <time_text index="9">%1 moins le quart</time_text>
       <time_text index="10">%1 moins dix</time_text>
       <time_text index="11">%1 moins cinq</time_text>
-      <time_text index="12">%1</time_text>
+      <time_text index="12">%1  juste</time_text>
    </times_text>
 </fuzzy_clock>
