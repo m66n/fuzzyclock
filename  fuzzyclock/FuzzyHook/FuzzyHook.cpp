@@ -23,7 +23,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "FuzzyHook.h"
-//#include "WriteLog.h"  // for debugging
+#include "WriteLog.h"  // for debugging
 #include <string>
 #include <vector>
 
@@ -44,7 +44,7 @@ wchar_t g_szTimesText[TT_STRING_SIZE * TT_COUNT] = L"";
 #define FUZZYHOOK_HOOK 1
 #define FUZZYHOOK_UNHOOK 2
 
-#define TIMER_ID_TIME 1
+#define TIMER_ID_PRECISE 1
 #define TIMER_ELAPSE_TIME 200
 
 #define TIMER_ID_FUZZY 2
@@ -197,6 +197,12 @@ LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
       }
       else
       {
+         KillTimer( g_hWnd, TIMER_ID_FUZZY );
+         KillTimer( g_hWnd, TIMER_ID_PRECISE );
+
+         g_bShowFuzzy = true;
+         SetTime();
+
          UnhookWindowsHookEx( g_hHook );
 
          if ( SetWindowLong( g_hWnd, GWL_WNDPROC, (long)(intptr_t)g_wndProcOld ) )
@@ -219,13 +225,9 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
    {
       if ( FUZZYHOOK_HOOK == lParam )
       {  
+         g_bShowFuzzy = true;
          SetTime();
          SetTimer( hWnd, TIMER_ID_FUZZY, TIMER_ELAPSE_FUZZY, NULL );
-      }
-      else
-      {
-         KillTimer( hWnd, TIMER_ID_FUZZY );
-         KillTimer( hWnd, TIMER_ID_TIME );
       }
 
       return 0;
@@ -236,13 +238,13 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
       if ( g_bShowFuzzy )
       {
-         KillTimer( hWnd, TIMER_ID_TIME );
+         KillTimer( hWnd, TIMER_ID_PRECISE );
          SetTimer( hWnd, TIMER_ID_FUZZY, TIMER_ELAPSE_FUZZY, NULL );
       }
       else
       {
          KillTimer( hWnd, TIMER_ID_FUZZY );
-         SetTimer( hWnd, TIMER_ID_TIME, TIMER_ELAPSE_TIME, NULL );
+         SetTimer( hWnd, TIMER_ID_PRECISE, TIMER_ELAPSE_TIME, NULL );
       }
 
       SetTime();
@@ -304,16 +306,17 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             SYSTEMTIME systemTime;
             GetLocalTime( &systemTime );
 
-            if ( GetFuzzyTimeSector( systemTime ) != g_sector )
+            if ( GetFuzzyTimeSector( systemTime ) == g_sector )
             {
-               g_sector = GetFuzzyTime( g_strTime );
-               break;
+               return 0;
             }
+
+            g_sector = GetFuzzyTime( g_strTime );
          }
 
-         return 0;
+         break;
 
-      case TIMER_ID_TIME:
+      case TIMER_ID_PRECISE:
 
          GetTime( g_strTime );
          break;
