@@ -40,6 +40,8 @@
 #endif
 
 
+const UINT RWM_TOGGLE = RegisterWindowMessage( _T("RWM_TOGGLE__C8A0D7ED_B4E6_4fbe_A2DA_A5CBF840D3CF") );
+
 FUZZYHOOK_API BOOL Hook( HWND );
 FUZZYHOOK_API BOOL Unhook();
 

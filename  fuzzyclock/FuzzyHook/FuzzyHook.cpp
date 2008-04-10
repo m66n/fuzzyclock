@@ -44,8 +44,11 @@ wchar_t g_szTimesText[TT_STRING_SIZE * TT_COUNT] = L"";
 #define FUZZYHOOK_HOOK 1
 #define FUZZYHOOK_UNHOOK 2
 
-#define TIMER_FORCE_UPDATE 1000
-#define FORCE_UPDATE_ELAPSE 60000
+#define TIMER_ID_TIME 1
+#define TIMER_ELAPSE_TIME 200
+
+#define TIMER_ID_FUZZY 2
+#define TIMER_ELAPSE_FUZZY 5000
 
 
 HINSTANCE g_hInst;
@@ -60,6 +63,10 @@ HBITMAP g_hbmpClock = NULL;
 HDC g_hdcClockBackground = NULL;
 HBITMAP g_hbmpClockBackground = NULL;
 
+bool g_bShowFuzzy = true;
+std::wstring g_strTime;
+int g_sector = 0;
+
 
 LRESULT CalculateWindowSize( HWND );
 void Cleanup();
@@ -68,13 +75,18 @@ void CopyParentSurface( HWND, HDC, int, int, int, int, int, int );
 bool CreateClockHDC( HWND );
 bool CreateMemoryDC( HDC, HDC&, HBITMAP&, int, int );
 void DrawFuzzyClock( HWND, HDC );
+int GetFuzzyTime( std::wstring& );
+int GetFuzzyTimeSector( const SYSTEMTIME& );
 void GetTextSize( HDC, LPCWSTR, TEXTMETRIC&, SIZE& );
 COLORREF GetThemeForeColor();
+void GetTime( std::wstring& );
 LRESULT _stdcall HookProc( int, WPARAM, LPARAM );
 void Initialize();
 LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
+LRESULT OnMouseDown( HWND, UINT, WPARAM, LPARAM );
+LRESULT OnMouseUp( HWND, UINT, WPARAM, LPARAM );
 void RefreshTaskbar( HWND );
-std::wstring TimeString();
+void SetTime();
 
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -189,7 +201,6 @@ LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
 
          if ( SetWindowLong( g_hWnd, GWL_WNDPROC, (long)(intptr_t)g_wndProcOld ) )
          {
-            KillTimer( g_hWnd, TIMER_FORCE_UPDATE );
             Cleanup();
             FreeLibrary( g_hInst );
             g_subclassed = FALSE;
@@ -204,8 +215,39 @@ LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
 
 LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-   if ( message == RWM_FUZZYHOOK )
+   if ( RWM_FUZZYHOOK == message )
    {
+      if ( FUZZYHOOK_HOOK == lParam )
+      {  
+         SetTime();
+         SetTimer( hWnd, TIMER_ID_FUZZY, TIMER_ELAPSE_FUZZY, NULL );
+      }
+      else
+      {
+         KillTimer( hWnd, TIMER_ID_FUZZY );
+         KillTimer( hWnd, TIMER_ID_TIME );
+      }
+
+      return 0;
+   }
+   else if ( RWM_TOGGLE == message )
+   {
+      g_bShowFuzzy = !g_bShowFuzzy;
+
+      if ( g_bShowFuzzy )
+      {
+         KillTimer( hWnd, TIMER_ID_TIME );
+         SetTimer( hWnd, TIMER_ID_FUZZY, TIMER_ELAPSE_FUZZY, NULL );
+      }
+      else
+      {
+         KillTimer( hWnd, TIMER_ID_FUZZY );
+         SetTimer( hWnd, TIMER_ID_TIME, TIMER_ELAPSE_TIME, NULL );
+      }
+
+      SetTime();
+      InvalidateRect( hWnd, NULL, TRUE );
+
       return 0;
    }
 
@@ -241,10 +283,41 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
       return 0;
 
    case WM_TIMECHANGE:
-   case (WM_USER+101):
+   case WM_USER + 101:
    case WM_SETFOCUS:
    case WM_KILLFOCUS:
+
+      SetTime();
+      InvalidateRect( hWnd, NULL, FALSE );
+      return 0;
+
    case WM_TIMER:
+
+      switch ( wParam )
+      {
+      case 0:
+         break;
+
+      case TIMER_ID_FUZZY:
+         
+         {
+            SYSTEMTIME systemTime;
+            GetLocalTime( &systemTime );
+
+            if ( GetFuzzyTimeSector( systemTime ) != g_sector )
+            {
+               g_sector = GetFuzzyTime( g_strTime );
+               break;
+            }
+         }
+
+         return 0;
+
+      case TIMER_ID_TIME:
+
+         GetTime( g_strTime );
+         break;
+      }
 
       InvalidateRect( hWnd, NULL, FALSE );
       return 0;
@@ -255,61 +328,6 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
    }
 
    return CallWindowProc( g_wndProcOld, hWnd, message, wParam, lParam );
-}
-
-
-std::wstring TimeString()
-{
-   SYSTEMTIME systemTime;
-
-   GetLocalTime( &systemTime );
-
-   int minute = systemTime.wMinute;
-   int sector = 0;
-   int realHour = 0;
-
-   if ( minute > 2 )
-   {
-      sector = ( minute - 3 ) / 5 + 1;
-   }
-
-   std::wstring timeString( &g_szTimesText[sector * TT_STRING_SIZE] );
-
-   size_t startIndex = timeString.find( L"%" );
-
-   if ( startIndex != std::wstring::npos )
-   {
-      size_t endIndex = timeString.find_first_of( L"01", startIndex );
-
-      if ( std::wstring::npos == endIndex )
-      {
-         endIndex = timeString.length();
-      }
-
-      size_t fieldLength = endIndex - startIndex + 1;
-
-      int deltaHour = _wtoi( timeString.substr( startIndex + 1, fieldLength - 1  ).c_str() );
-
-      if ( ( systemTime.wHour + deltaHour ) % 12 > 0 )
-      {
-         realHour = ( systemTime.wHour + deltaHour ) % 12 - 1;
-      }
-      else
-      {
-         realHour = 12 - ( ( systemTime.wHour + deltaHour ) % 12 + 1 );
-      }
-
-      timeString.replace( startIndex, fieldLength, &g_szHoursText[realHour * HT_STRING_SIZE] );
-
-      wchar_t capitalizedFirstChar[2];
-
-      LCMapStringW( LOCALE_SYSTEM_DEFAULT, LCMAP_UPPERCASE, timeString.c_str(), 1, capitalizedFirstChar, 2 );
-      capitalizedFirstChar[1] = L'\0';
-
-      timeString.replace( 0, 1, capitalizedFirstChar );
-   }
-
-   return timeString;
 }
 
 
@@ -334,11 +352,9 @@ LRESULT CalculateWindowSize( HWND hwnd )
 
    GetTextMetrics( hdc, &tm );
 
-   std::wstring timeString = TimeString();
-
    SIZE sizeText;
 
-   GetTextSize( hdc, timeString.c_str(), tm, sizeText );
+   GetTextSize( hdc, g_strTime.c_str(), tm, sizeText );
 
    wclock = sizeText.cx;
    hclock = sizeText.cy;
@@ -377,26 +393,22 @@ void DrawFuzzyClock( HWND hWnd, HDC hDC )
       }
    }
 
-   SetTimer( hWnd, TIMER_FORCE_UPDATE, FORCE_UPDATE_ELAPSE, NULL );
-
    RECT rc;
    GetClientRect( hWnd, &rc );
 
    BitBlt( g_hdcClock, 0, 0, rc.right, rc.bottom, g_hdcClockBackground, 0, 0, SRCCOPY );
-
-   std::wstring timeString = TimeString();
 
    TEXTMETRIC textMetric;
    GetTextMetrics( g_hdcClock, &textMetric );
 
    SIZE sizeText;
 
-   GetTextSize( g_hdcClock, timeString.c_str(), textMetric, sizeText );
+   GetTextSize( g_hdcClock, g_strTime.c_str(), textMetric, sizeText );
 
    int x = rc.right / 2;;
    int y = ( rc.bottom - sizeText.cy ) / 2 - textMetric.tmInternalLeading / 2;
 
-   TextOutW( g_hdcClock, x, y, timeString.c_str(), (int)timeString.size() );
+   TextOutW( g_hdcClock, x, y, g_strTime.c_str(), (int)g_strTime.size() );
 
    BitBlt( hDC, 0, 0, rc.right, rc.bottom, g_hdcClock, 0, 0, SRCCOPY );
 
@@ -671,3 +683,93 @@ COLORREF GetThemeForeColor()
    return clr;
 }
 
+
+void GetTime( std::wstring& strTime )
+{
+   int numChars = GetTimeFormatW( NULL, 0, NULL, NULL, NULL, 0 );
+
+   std::vector<WCHAR> buffer( numChars );
+
+   int result = GetTimeFormatW( NULL, 0, NULL, NULL, &(buffer[0]), numChars );
+
+   strTime = &(buffer[0]);
+}
+
+
+int GetFuzzyTimeSector( const SYSTEMTIME& systemTime )
+{
+   int sector = 0;
+
+   int seconds = systemTime.wMinute * 60 + systemTime.wSecond;
+
+   if ( seconds > 150 )
+   {
+      sector = ( seconds - 150 ) / 300 + 1;
+   }
+
+   return sector;
+}
+
+
+int GetFuzzyTime( std::wstring& strFuzzyTime )
+{
+   SYSTEMTIME systemTime;
+   GetLocalTime( &systemTime );
+
+   int sector = GetFuzzyTimeSector( systemTime );
+
+   std::wstring timeString( &g_szTimesText[sector * TT_STRING_SIZE] );
+
+   size_t startIndex = timeString.find( L"%" );
+
+   if ( std::wstring::npos != startIndex )
+   {
+      int realHour = 0;
+
+      size_t endIndex = timeString.find_first_of( L"01", startIndex );
+
+      if ( std::wstring::npos == endIndex )
+      {
+         endIndex = timeString.length();
+      }
+
+      size_t fieldLength = endIndex - startIndex + 1;
+
+      int deltaHour = _wtoi( timeString.substr( startIndex + 1, fieldLength - 1  ).c_str() );
+
+      if ( ( systemTime.wHour + deltaHour ) % 12 > 0 )
+      {
+         realHour = ( systemTime.wHour + deltaHour ) % 12 - 1;
+      }
+      else
+      {
+         realHour = 12 - ( ( systemTime.wHour + deltaHour ) % 12 + 1 );
+      }
+
+      timeString.replace( startIndex, fieldLength, &g_szHoursText[realHour * HT_STRING_SIZE] );
+
+      wchar_t capitalizedFirstChar[2];
+
+      LCMapStringW( LOCALE_SYSTEM_DEFAULT, LCMAP_UPPERCASE, timeString.c_str(), 1, capitalizedFirstChar, 2 );
+      capitalizedFirstChar[1] = L'\0';
+
+      timeString.replace( 0, 1, capitalizedFirstChar );
+
+      strFuzzyTime = timeString.c_str();
+   }
+
+   return sector;
+}
+
+
+void SetTime()
+{
+   if ( g_bShowFuzzy )
+   {
+      g_sector = GetFuzzyTime( g_strTime );
+   }
+   else
+   {
+      GetTime( g_strTime );
+   }
+}

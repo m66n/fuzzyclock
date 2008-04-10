@@ -384,8 +384,11 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
 
       DestroyMenu( hMenu );
    }
-   else if ( LOWORD( lParam ) == WM_LBUTTONDBLCLK )
+   else if ( LOWORD( lParam ) == WM_LBUTTONUP )
    {
+      PostMessage( GetTrayClock(), RWM_TOGGLE, 0, 0 );
+
+      /*
       HMENU hMenu = LoadMenu( g_hInstance, MAKEINTRESOURCE( IDR_TRAYMENU ) );
 
       if ( NULL == hMenu )
@@ -405,6 +408,7 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
       }
 
       DestroyMenu( hMenu );
+      */
    }
 
    return 0;
