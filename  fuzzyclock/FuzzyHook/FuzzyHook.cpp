@@ -23,7 +23,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "FuzzyHook.h"
-#include "WriteLog.h"  // for debugging
+//#include "WriteLog.h"  // for debugging
 #include <string>
 #include <vector>
 
@@ -79,7 +79,7 @@ int GetFuzzyTime( std::wstring& );
 int GetFuzzyTimeSector( const SYSTEMTIME& );
 void GetTextSize( HDC, LPCWSTR, TEXTMETRIC&, SIZE& );
 COLORREF GetThemeForeColor();
-void GetTime( std::wstring& );
+void GetPreciseTime( std::wstring& );
 LRESULT _stdcall HookProc( int, WPARAM, LPARAM );
 void Initialize();
 LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
@@ -159,7 +159,7 @@ FUZZYHOOK_API void SetTimeText( int index, LPCWSTR szTimeText )
 
 FUZZYHOOK_API void Invalidate()
 {
-   PostMessage( g_hWnd, WM_SIZE, SIZE_RESTORED, 0 );
+   PostMessage( g_hWnd, WM_TIMECHANGE, 0, 0 );
 }
 
 
@@ -318,7 +318,14 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
       case TIMER_ID_PRECISE:
 
-         GetTime( g_strTime );
+         std::wstring temp( g_strTime );
+         GetPreciseTime( g_strTime );
+
+         if ( temp == g_strTime )
+         {
+            return 0;
+         }
+
          break;
       }
 
@@ -427,36 +434,6 @@ void DrawFuzzyClock( HWND hWnd, HDC hDC )
 void Initialize()
 {
    g_clrForeground = GetThemeForeColor();
-
-   HFONT hFont = (HFONT)GetStockObject( DEFAULT_GUI_FONT );
-
-   LOGFONT lf;
-   GetObject( hFont, sizeof(lf), (LPVOID)(&lf) );
-
-   HDC hDC = GetDC( NULL );
-
-   POINT pt;
-   pt.x = 0;
-   pt.y = GetDeviceCaps( hDC, LOGPIXELSY ) * 9 / 72;
-   DPtoLP( hDC, &pt, 1 );
-
-   lf.lfHeight = -pt.y;
-
-   ReleaseDC( NULL, hDC );
-
-   lf.lfWidth = 0;
-   lf.lfEscapement = 0;
-   lf.lfOrientation = 0;
-   lf.lfWeight = 0;
-   lf.lfItalic = FALSE;
-   lf.lfUnderline = FALSE;
-   lf.lfStrikeOut = FALSE;
-   lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
-   lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-   lf.lfQuality = DEFAULT_QUALITY;
-   lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-
-   g_hFont = CreateFontIndirect( &lf );
 }
 
 
@@ -571,6 +548,7 @@ bool CreateClockHDC( HWND hWnd )
    }
 
    SelectObject( g_hdcClock, g_hFont );
+
    SetBkMode( g_hdcClock, TRANSPARENT );
 
    SetTextAlign( g_hdcClock, TA_CENTER | TA_TOP );
@@ -644,13 +622,16 @@ COLORREF GetThemeForeColor()
    {
       typedef HANDLE WINAPI OPENTHEMEDATA( HWND, LPCWSTR );
       typedef HRESULT WINAPI GETTHEMECOLOR( HANDLE, int, int, int, COLORREF* );
+      typedef HRESULT WINAPI GETTHEMEFONT( HANDLE, HDC, int, int, int, LOGFONT* );
       typedef HRESULT WINAPI CLOSETHEMEDATA( HANDLE );
 
-      OPENTHEMEDATA* pOPENTHEMEDATA = reinterpret_cast<OPENTHEMEDATA*>(
+      OPENTHEMEDATA* pOPENTHEMEDATA = reinterpret_cast< OPENTHEMEDATA* >(
          GetProcAddress( hMod, ( "OpenThemeData" ) ) );
-      GETTHEMECOLOR* pGETTHEMECOLOR = reinterpret_cast<GETTHEMECOLOR*>(
+      GETTHEMECOLOR* pGETTHEMECOLOR = reinterpret_cast< GETTHEMECOLOR* >(
          GetProcAddress( hMod, ( "GetThemeColor" ) ) );
-      CLOSETHEMEDATA* pCLOSETHEMEDATA = reinterpret_cast<CLOSETHEMEDATA*>(
+      GETTHEMEFONT* pGETTHEMEFONT = reinterpret_cast< GETTHEMEFONT* >(
+         GetProcAddress( hMod, ( "GetThemeFont" ) ) );
+      CLOSETHEMEDATA* pCLOSETHEMEDATA = reinterpret_cast< CLOSETHEMEDATA* >(
          GetProcAddress( hMod, ( "CloseThemeData" ) ) );
 
       //TMT_TEXTCOLOR 3803
@@ -673,6 +654,16 @@ COLORREF GetThemeForeColor()
                }
             }
 
+            if ( NULL != pGETTHEMEFONT )
+            {
+               LOGFONT logFont;
+
+               if ( SUCCEEDED( pGETTHEMEFONT( hTheme, NULL, 1, 1, 210, &logFont ) ) )
+               {
+                  g_hFont = CreateFontIndirect( &logFont );
+               }
+            }
+
             if ( NULL != pCLOSETHEMEDATA )
             {
                pCLOSETHEMEDATA( hTheme );
@@ -683,11 +674,18 @@ COLORREF GetThemeForeColor()
       FreeLibrary( hMod );
    }
 
+   if ( NULL == g_hFont )
+   {
+      LOGFONT lf;
+      SystemParametersInfo( SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0 );
+      g_hFont = CreateFontIndirect( &lf );
+   }
+
    return clr;
 }
 
 
-void GetTime( std::wstring& strTime )
+void GetPreciseTime( std::wstring& strTime )
 {
    int numChars = GetTimeFormatW( NULL, 0, NULL, NULL, NULL, 0 );
 
@@ -773,6 +771,6 @@ void SetTime()
    }
    else
    {
-      GetTime( g_strTime );
+      GetPreciseTime( g_strTime );
    }
 }

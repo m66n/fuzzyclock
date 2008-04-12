@@ -387,28 +387,6 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
    else if ( LOWORD( lParam ) == WM_LBUTTONUP )
    {
       PostMessage( GetTrayClock(), RWM_TOGGLE, 0, 0 );
-
-      /*
-      HMENU hMenu = LoadMenu( g_hInstance, MAKEINTRESOURCE( IDR_TRAYMENU ) );
-
-      if ( NULL == hMenu )
-      {
-         return 0;
-      }
-
-      SetForegroundWindow( g_hWnd );
-
-      HMENU hPopupMenu = GetSubMenu( hMenu, 0 );
-
-      if ( NULL != hPopupMenu )
-      {
-         UINT itemID = GetMenuItemID( hPopupMenu, 0 );
-
-         SendMessage( g_hWnd, WM_COMMAND, itemID, 0 );
-      }
-
-      DestroyMenu( hMenu );
-      */
    }
 
    return 0;
