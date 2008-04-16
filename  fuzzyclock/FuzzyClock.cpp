@@ -47,11 +47,14 @@ HWND g_hWnd;
 TCHAR g_szTitle[MAX_LOADSTRING];
 TCHAR g_szWindowClass[MAX_LOADSTRING];
 NOTIFYICONDATAW g_nid;
+HICON g_hTrayIcon = NULL;
 
 XMLHelper g_xmlHelper;
 
 const UINT RWM_IDENTITY = RegisterWindowMessage( _T("RWM_IDENTITY__F4252D21_27F7_4d84_AE3B_48156BC571BC") );
 const UINT RWM_TRAYICON = RegisterWindowMessage( _T("RWM_TRAYICON__C363ED38_3BEA_477b_B407_2A235F89F4E7") );
+
+const UINT RWM_TASKBARCREATED = RegisterWindowMessage( _T("TaskbarCreated") );
 
 
 BOOL AddTrayIcon( HWND, LPCWSTR, HICON, UINT );
@@ -61,6 +64,7 @@ HWND GetTrayClock();
 tstring GetXMLFile();
 BOOL InitInstance( HINSTANCE, int );
 LRESULT OnIdentity( WPARAM, LPARAM );
+LRESULT OnTaskbarCreated( WPARAM, LPARAM );
 LRESULT OnTrayIcon( WPARAM, LPARAM );
 BOOL ProcessXMLFile( LPCWSTR );
 ATOM RegisterWindow( HINSTANCE );
@@ -70,9 +74,9 @@ void SetTrayIconText( LPCWSTR );
 
 
 int APIENTRY _tWinMain( HINSTANCE hInstance,
-                       HINSTANCE hPrevInstance,
-                       LPTSTR    lpCmdLine,
-                       int       nCmdShow )
+                        HINSTANCE hPrevInstance,
+                        LPTSTR    lpCmdLine,
+                        int       nCmdShow )
 {
    UNREFERENCED_PARAMETER( hPrevInstance );
    UNREFERENCED_PARAMETER( lpCmdLine );
@@ -138,10 +142,10 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
 
    MSG msg;
 
-   HICON hTrayIcon = (HICON)LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ),
+   g_hTrayIcon = (HICON)LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ),
       IMAGE_ICON, 0, 0, 0 );
 
-   AddTrayIcon( g_hWnd, g_xmlHelper.GetApplicationName().c_str(), hTrayIcon, IDR_TRAYMENU );
+   AddTrayIcon( g_hWnd, g_xmlHelper.GetApplicationName().c_str(), g_hTrayIcon, IDR_TRAYMENU );
 
    SetProcessWorkingSetSize( GetCurrentProcess(), -1, -1 );
 
@@ -152,7 +156,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
    }
 
    RemoveTrayIcon();
-   DestroyIcon( hTrayIcon );
+   DestroyIcon( g_hTrayIcon );
 
    Unhook();
 
@@ -304,6 +308,10 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
    {
       return OnIdentity( wParam, lParam );
    }
+   else if ( RWM_TASKBARCREATED == message )
+   {
+      return OnTaskbarCreated( wParam, lParam );
+   }
 
    return DefWindowProc( hWnd, message, wParam, lParam );
 }
@@ -329,7 +337,6 @@ BOOL AddTrayIcon( HWND hWnd, LPCWSTR lpszToolTip, HICON hIcon, UINT uID )
 BOOL RemoveTrayIcon()
 {
    g_nid.uFlags = 0;
-
    return Shell_NotifyIconW( NIM_DELETE, &g_nid );
 }
 
@@ -522,4 +529,11 @@ void SetTrayIconText( LPCWSTR szText )
    wcscpy_s( g_nid.szTip, sizeof( g_nid.szTip ), szText );
 
    Shell_NotifyIconW( NIM_MODIFY, &g_nid );
+}
+
+
+LRESULT OnTaskbarCreated( WPARAM, LPARAM )
+{
+   SendMessage( g_hWnd, WM_COMMAND, MAKEWORD( IDM_EXIT, 0 ), 0 );
+   return 0;
 }

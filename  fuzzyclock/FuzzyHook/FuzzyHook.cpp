@@ -31,7 +31,6 @@
 #pragma data_seg(".fuzzy")
 BOOL g_subclassed = FALSE;
 UINT RWM_FUZZYHOOK = 0;
-UINT RWM_RESET = 0;
 HWND g_hWnd	= NULL;
 HHOOK g_hHook = NULL;
 wchar_t g_szHoursText[HT_STRING_SIZE * HT_COUNT] = L"";
@@ -78,10 +77,9 @@ void DrawFuzzyClock( HWND, HDC );
 int GetFuzzyTime( std::wstring& );
 int GetFuzzyTimeSector( const SYSTEMTIME& );
 void GetTextSize( HDC, LPCWSTR, TEXTMETRIC&, SIZE& );
-COLORREF GetThemeForeColor();
+void GetThemeSettings( COLORREF&, HFONT& );
 void GetPreciseTime( std::wstring& );
 LRESULT _stdcall HookProc( int, WPARAM, LPARAM );
-void Initialize();
 LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
 LRESULT OnMouseDown( HWND, UINT, WPARAM, LPARAM );
 LRESULT OnMouseUp( HWND, UINT, WPARAM, LPARAM );
@@ -95,13 +93,12 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 {
    if ( DLL_PROCESS_ATTACH == ul_reason_for_call )
    {
-      g_hInst = (HINSTANCE)hModule;	
+      g_hInst = (HINSTANCE)hModule;
       DisableThreadLibraryCalls( g_hInst );
 
       if ( 0 == RWM_FUZZYHOOK )
       {
          RWM_FUZZYHOOK = RegisterWindowMessage( _T("RWM_FUZZYHOOK__B78C168A_5AE4_405c_A8B6_B30FB917567A") );
-         RWM_RESET = RegisterWindowMessage( _T("RWM_RESET__AD6337A5_5544_48cd_9C29_B9768DC467D3") );
       }
    }
 
@@ -189,7 +186,7 @@ LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
                else
                {
                   g_subclassed = TRUE;
-                  Initialize();
+                  GetThemeSettings( g_clrForeground, g_hFont );
                   InvalidateRect( g_hWnd, NULL, TRUE );
                }
             }
@@ -266,7 +263,6 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
       return 0;
 
-   case WM_SETTINGCHANGE:
    case WM_SIZE:
 
       CreateClockHDC( hWnd );
@@ -277,9 +273,10 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
       return CalculateWindowSize( hWnd );
 
+   case WM_SETTINGCHANGE:
    case WM_SYSCOLORCHANGE:
 
-      g_clrForeground = GetThemeForeColor();
+      GetThemeSettings( g_clrForeground, g_hFont );
       CreateClockHDC( hWnd );
       InvalidateRect( hWnd, NULL, TRUE );
       return 0;
@@ -428,12 +425,6 @@ void DrawFuzzyClock( HWND hWnd, HDC hDC )
       PostMessage( GetParent( GetParent( hWnd ) ), WM_SIZE, SIZE_RESTORED, 0 );
       InvalidateRect( GetParent( GetParent( hWnd ) ), NULL, TRUE );
    }
-}
-
-
-void Initialize()
-{
-   g_clrForeground = GetThemeForeColor();
 }
 
 
@@ -612,9 +603,15 @@ void RefreshTaskbar( HWND hwndClock )
 }
 
 
-COLORREF GetThemeForeColor()
+void GetThemeSettings( COLORREF& clr, HFONT& hFont )
 {
-   COLORREF clr = COLOR_BTNTEXT;
+   clr = COLOR_BTNTEXT;
+
+   if ( NULL != hFont )
+   {
+      DeleteObject( hFont );
+      hFont = NULL;
+   }
 
    HMODULE hMod = LoadLibrary( _T("uxtheme.dll") );
 
@@ -660,7 +657,7 @@ COLORREF GetThemeForeColor()
 
                if ( SUCCEEDED( pGETTHEMEFONT( hTheme, NULL, 1, 1, 210, &logFont ) ) )
                {
-                  g_hFont = CreateFontIndirect( &logFont );
+                  hFont = CreateFontIndirect( &logFont );
                }
             }
 
@@ -674,14 +671,14 @@ COLORREF GetThemeForeColor()
       FreeLibrary( hMod );
    }
 
-   if ( NULL == g_hFont )
+   if ( NULL == hFont )
    {
-      LOGFONT lf;
-      SystemParametersInfo( SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0 );
-      g_hFont = CreateFontIndirect( &lf );
+      NONCLIENTMETRICS ncm;
+      ncm.cbSize = sizeof( ncm );
+      SystemParametersInfo( SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0 );
+      ncm.lfCaptionFont.lfWeight = FW_NORMAL;
+      hFont = CreateFontIndirect( &(ncm.lfCaptionFont) );
    }
-
-   return clr;
 }
 
 
