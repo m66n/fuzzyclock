@@ -412,7 +412,7 @@ void DrawFuzzyClock( HWND hWnd, HDC hDC )
 
    GetTextSize( g_hdcClock, g_strTime.c_str(), textMetric, sizeText );
 
-   int x = rc.right / 2;;
+   int x = rc.right / 2;
    int y = ( rc.bottom - sizeText.cy ) / 2 - textMetric.tmInternalLeading / 2;
 
    TextOutW( g_hdcClock, x, y, g_strTime.c_str(), (int)g_strTime.size() );

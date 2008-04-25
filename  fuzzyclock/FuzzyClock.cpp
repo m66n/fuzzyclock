@@ -41,6 +41,8 @@ typedef std::string tstring;
 #define TRAYNOTIFY_WNDCLASS _T("TrayNotifyWnd")
 #define TRAYCLOCK_WNDCLASS _T("TrayClockWClass")
 
+#define TIMER_ID_CLICK 1
+
 
 HINSTANCE g_hInstance;
 HWND g_hWnd;
@@ -58,6 +60,7 @@ const UINT RWM_TASKBARCREATED = RegisterWindowMessage( _T("TaskbarCreated") );
 
 
 BOOL AddTrayIcon( HWND, LPCWSTR, HICON, UINT );
+void CALLBACK DelayedSingleClick( HWND, UINT, UINT_PTR, DWORD );
 BOOL CALLBACK EnumWindowsProc( HWND, LPARAM );
 tstring GetDefaultXMLFile( LPCTSTR );
 HWND GetTrayClock();
@@ -391,9 +394,33 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
 
       DestroyMenu( hMenu );
    }
-   else if ( LOWORD( lParam ) == WM_LBUTTONUP )
+   else if ( LOWORD( lParam ) == WM_LBUTTONDOWN )
    {
-      PostMessage( GetTrayClock(), RWM_TOGGLE, 0, 0 );
+      SetTimer( g_hWnd, TIMER_ID_CLICK, GetDoubleClickTime(), DelayedSingleClick );
+   }
+   else if ( LOWORD( lParam ) == WM_LBUTTONDBLCLK )
+   {
+      KillTimer( g_hWnd, TIMER_ID_CLICK );
+
+      HMENU hMenu = LoadMenu( g_hInstance, MAKEINTRESOURCE( IDR_TRAYMENU ) );
+
+      if ( NULL == hMenu )
+      {
+         return 0;
+      }
+
+      SetForegroundWindow( g_hWnd );
+
+      HMENU hPopupMenu = GetSubMenu( hMenu, 0 );
+
+      if ( NULL != hPopupMenu )
+      {
+         UINT itemID = GetMenuItemID( hPopupMenu, 0 );
+
+         SendMessage( g_hWnd, WM_COMMAND, itemID, 0 );
+      }
+
+      DestroyMenu( hMenu );
    }
 
    return 0;
@@ -536,4 +563,11 @@ LRESULT OnTaskbarCreated( WPARAM, LPARAM )
 {
    SendMessage( g_hWnd, WM_COMMAND, MAKEWORD( IDM_EXIT, 0 ), 0 );
    return 0;
+}
+
+
+void CALLBACK DelayedSingleClick( HWND hwnd, UINT, UINT_PTR id, DWORD )
+{
+   KillTimer( g_hWnd, TIMER_ID_CLICK );
+   PostMessage( GetTrayClock(), RWM_TOGGLE, 0, 0 );
 }
