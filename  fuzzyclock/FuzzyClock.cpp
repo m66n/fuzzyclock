@@ -396,6 +396,8 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
    }
    else if ( LOWORD( lParam ) == WM_LBUTTONDOWN )
    {
+      // thanks to http://blogs.msdn.com/oldnewthing/archive/2004/10/15/242761.aspx
+      //
       SetTimer( g_hWnd, TIMER_ID_CLICK, GetDoubleClickTime(), DelayedSingleClick );
    }
    else if ( LOWORD( lParam ) == WM_LBUTTONDBLCLK )
@@ -568,6 +570,6 @@ LRESULT OnTaskbarCreated( WPARAM, LPARAM )
 
 void CALLBACK DelayedSingleClick( HWND hwnd, UINT, UINT_PTR id, DWORD )
 {
-   KillTimer( g_hWnd, TIMER_ID_CLICK );
+   KillTimer( hwnd, id );
    PostMessage( GetTrayClock(), RWM_TOGGLE, 0, 0 );
 }
