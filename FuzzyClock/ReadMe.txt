@@ -1,4 +1,4 @@
-FuzzyClock 1.4 (revision 33) 16 April 2008
+FuzzyClock 1.5 (revision 38) 29 April 2008
 
 http://fuzzyclock.googlecode.com
 
@@ -20,10 +20,13 @@ name>\Start Menu\Programs\Startup.
 
 Use
 
-1. Right click on FuzzyClock tray icon to exit program.
+1. Right-click or double-click on FuzzyClock tray icon to exit program.
 
 2. Click on FuzzyClock tray icon to toggle between fuzzy and precise
 times.
+
+3. Right-click on FuzzyClock tray icon to select from four levels of 
+fuzziness.
 
 
 

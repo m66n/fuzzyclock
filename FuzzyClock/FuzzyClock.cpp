@@ -88,7 +88,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
       _T("FuzzyClock__8E5405E2_BD48_41cd_AAF4_C7183EA13CBB") );
 
    if ( GetLastError() == ERROR_ALREADY_EXISTS ||
-      GetLastError() == ERROR_ACCESS_DENIED )
+        GetLastError() == ERROR_ACCESS_DENIED )
    {
       HWND hRunning = NULL;
 
@@ -146,7 +146,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
    MSG msg;
 
    g_hTrayIcon = (HICON)LoadImage( hInstance, MAKEINTRESOURCE( IDI_SMALL ),
-      IMAGE_ICON, 0, 0, 0 );
+      IMAGE_ICON, GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
 
    AddTrayIcon( g_hWnd, g_xmlHelper.GetApplicationName().c_str(), g_hTrayIcon, IDR_TRAYMENU );
 
@@ -243,6 +243,16 @@ BOOL ProcessXMLFile( LPCWSTR szFilePath )
       SetTimeText( index, g_xmlHelper.GetTimeText( index ).c_str() );
    }
 
+   for ( UINT index = 0; index < g_xmlHelper.GetMidTimesTextCount(); ++index )
+   {
+      SetMidTimeText( index, g_xmlHelper.GetMidTimeText( index ).c_str() );
+   }
+
+   for ( UINT index = 0; index < g_xmlHelper.GetHighTimesTextCount(); ++index )
+   {
+      SetHighTimeText( index, g_xmlHelper.GetHighTimeText( index ).c_str() );
+   }
+
    return TRUE;
 }
 
@@ -262,6 +272,26 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
          case IDM_EXIT:
 
             DestroyWindow( hWnd );
+            break;
+
+         case ID_FUZZINESS_LOWEST:
+
+            PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Lowest, 0 );
+            break;
+
+         case ID_FUZZINESS_LOWER:
+
+            PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Lower, 0 );
+            break;
+
+         case ID_FUZZINESS_HIGHER:
+
+            PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Higher, 0 );
+            break;
+
+         case ID_FUZZINESS_HIGHEST:
+
+            PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Highest, 0 );
             break;
 
          default:
@@ -344,6 +374,29 @@ BOOL RemoveTrayIcon()
 }
 
 
+
+void SetMenuText( HMENU hMenu, UINT id, LPCWSTR szText, BOOL indexed = FALSE )
+{
+   wchar_t buffer[64];
+
+   MENUITEMINFOW mii;
+   mii.cbSize = sizeof( MENUITEMINFOW );
+   mii.dwTypeData = buffer;
+   mii.cch = 64;
+
+   GetMenuItemInfoW( hMenu, id, indexed, &mii );
+
+   mii.fMask = MIIM_TYPE;
+   mii.fType = MFT_STRING;
+
+   wcscpy_s( buffer, 64, szText );
+
+   buffer[63] = L'0';
+
+   SetMenuItemInfoW( hMenu, id, indexed, &mii );
+}
+
+
 LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
 {
    if ( wParam != g_nid.uID )
@@ -369,23 +422,25 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
          POINT cursorPos;
          GetCursorPos( &cursorPos );
 
-         SetMenuDefaultItem( hPopupMenu, 0, TRUE );
+         SetMenuDefaultItem( hPopupMenu, IDM_EXIT, FALSE );
 
-         wchar_t buffer[64];
+         SetMenuText( hPopupMenu, IDM_EXIT, g_xmlHelper.GetExitText().c_str() );
 
-         MENUITEMINFOW mii;
-         mii.cbSize = sizeof( MENUITEMINFOW );
-         mii.dwTypeData = buffer;
-         mii.cch = 64;
+         SetMenuText( hPopupMenu, 0, g_xmlHelper.GetFuzzinessText().c_str(), TRUE );
 
-         GetMenuItemInfoW( hPopupMenu, 0, TRUE, &mii );
+         HMENU hFuzzinessMenu = GetSubMenu( hPopupMenu, 0 );
 
-         mii.fMask = MIIM_TYPE;
-         mii.fType = MFT_STRING;
+         if ( NULL != hFuzzinessMenu )
+         {
+            SetMenuText( hFuzzinessMenu, ID_FUZZINESS_LOWEST, g_xmlHelper.GetFuzzinessLevelText( 0 ).c_str() );
+            SetMenuText( hFuzzinessMenu, ID_FUZZINESS_LOWER, g_xmlHelper.GetFuzzinessLevelText( 1 ).c_str() );
+            SetMenuText( hFuzzinessMenu, ID_FUZZINESS_HIGHER, g_xmlHelper.GetFuzzinessLevelText( 2 ).c_str() );
+            SetMenuText( hFuzzinessMenu, ID_FUZZINESS_HIGHEST, g_xmlHelper.GetFuzzinessLevelText( 3 ).c_str() );
 
-         wcscpy_s( buffer, 64, g_xmlHelper.GetExitText().c_str() );
+            UINT level = (UINT)SendMessage( GetTrayClock(), RWM_GETFUZZINESS, 0, 0 );
 
-         SetMenuItemInfoW( hPopupMenu, 0, TRUE, &mii );
+            CheckMenuRadioItem( hFuzzinessMenu, 0, 3, level, MF_BYPOSITION | MF_CHECKED );
+         }
 
          TrackPopupMenu( hPopupMenu, TPM_LEFTALIGN, cursorPos.x, cursorPos.y, 0, g_hWnd, NULL );
 
@@ -403,26 +458,7 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
    else if ( LOWORD( lParam ) == WM_LBUTTONDBLCLK )
    {
       KillTimer( g_hWnd, TIMER_ID_CLICK );
-
-      HMENU hMenu = LoadMenu( g_hInstance, MAKEINTRESOURCE( IDR_TRAYMENU ) );
-
-      if ( NULL == hMenu )
-      {
-         return 0;
-      }
-
-      SetForegroundWindow( g_hWnd );
-
-      HMENU hPopupMenu = GetSubMenu( hMenu, 0 );
-
-      if ( NULL != hPopupMenu )
-      {
-         UINT itemID = GetMenuItemID( hPopupMenu, 0 );
-
-         SendMessage( g_hWnd, WM_COMMAND, itemID, 0 );
-      }
-
-      DestroyMenu( hMenu );
+      SendMessage( g_hWnd, WM_COMMAND, IDM_EXIT, 0 );
    }
 
    return 0;

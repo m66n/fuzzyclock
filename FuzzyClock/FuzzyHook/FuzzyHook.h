@@ -20,10 +20,15 @@
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-#define HT_STRING_SIZE 32
-#define TT_STRING_SIZE 48
-#define HT_COUNT 12
-#define TT_COUNT 13
+#define HT_STRING_SIZE     32
+#define TT_STRING_SIZE     48
+#define MID_STRING_SIZE    48
+#define HIGH_STRING_SIZE   48
+
+#define HT_COUNT     12
+#define TT_COUNT     13
+#define MID_COUNT     8
+#define HIGH_COUNT    4
 
 
 // The following ifdef block is the standard way of creating macros which make exporting 
@@ -41,11 +46,25 @@
 
 
 const UINT RWM_TOGGLE = RegisterWindowMessage( _T("RWM_TOGGLE__C8A0D7ED_B4E6_4fbe_A2DA_A5CBF840D3CF") );
+const UINT RWM_SETFUZZINESS = RegisterWindowMessage( _T("RWM_SETFUZZINESS__0A30930E_23C8_4a9d_986C_E6BB108DB4FB") );
+const UINT RWM_GETFUZZINESS = RegisterWindowMessage( _T("RWM_GETFUZZINESS__52C641CD_2B01_43cb_9D24_A91559C35E81") );
+
+
+typedef enum 
+{
+   Lowest,
+   Lower,
+   Higher,
+   Highest
+} FuzzinessLevel;
+
 
 FUZZYHOOK_API BOOL Hook( HWND );
 FUZZYHOOK_API BOOL Unhook();
 
 FUZZYHOOK_API void SetHourText( int index, LPCWSTR szHourText );
 FUZZYHOOK_API void SetTimeText( int index, LPCWSTR szTimeText );
+FUZZYHOOK_API void SetMidTimeText( int index, LPCWSTR szTimeText );
+FUZZYHOOK_API void SetHighTimeText( int index, LPCWSTR szTimeText );
 
 FUZZYHOOK_API void Invalidate();

@@ -11,6 +11,11 @@
 #define IDR_MAINFRAME                   128
 #define IDR_TRAYMENU                    129
 #define IDR_XMLDEFAULT                  130
+#define ID__FUZZINESS                   32772
+#define ID_FUZZINESS_LOWEST             32773
+#define ID_FUZZINESS_LOWER              32774
+#define ID_FUZZINESS_HIGHER             32775
+#define ID_FUZZINESS_HIGHEST            32776
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -19,7 +24,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         32772
+#define _APS_NEXT_COMMAND_VALUE         32777
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           110
 #endif

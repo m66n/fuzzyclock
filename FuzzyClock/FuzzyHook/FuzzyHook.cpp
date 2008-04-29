@@ -35,6 +35,8 @@ HWND g_hWnd	= NULL;
 HHOOK g_hHook = NULL;
 wchar_t g_szHoursText[HT_STRING_SIZE * HT_COUNT] = L"";
 wchar_t g_szTimesText[TT_STRING_SIZE * TT_COUNT] = L"";
+wchar_t g_szMidTimesText[MID_STRING_SIZE * MID_COUNT] = L"";
+wchar_t g_szHighTimesText[HIGH_STRING_SIZE * HIGH_COUNT] = L"";
 #pragma data_seg()
 
 #pragma comment(linker,"/SECTION:.fuzzy,RWS")
@@ -66,6 +68,8 @@ bool g_bShowFuzzy = true;
 std::wstring g_strTime;
 int g_sector = 0;
 
+FuzzinessLevel g_level = Lowest;
+
 
 LRESULT CalculateWindowSize( HWND );
 void Cleanup();
@@ -85,6 +89,12 @@ LRESULT OnMouseDown( HWND, UINT, WPARAM, LPARAM );
 LRESULT OnMouseUp( HWND, UINT, WPARAM, LPARAM );
 void RefreshTaskbar( HWND );
 void SetTime();
+
+int GetLowerFuzzyTimeSector( const SYSTEMTIME& );
+int GetHighFuzzyTime( const SYSTEMTIME&, std::wstring& );
+int GetMidFuzzyTime( const SYSTEMTIME&, std::wstring& );
+int GetMidFuzzyTimeSector( const SYSTEMTIME& );
+int GetHighFuzzyTimeSector( const SYSTEMTIME& );
 
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -150,6 +160,24 @@ FUZZYHOOK_API void SetTimeText( int index, LPCWSTR szTimeText )
    if ( index >= 0 && index < TT_COUNT )
    {
       wcscpy_s( &g_szTimesText[index * TT_STRING_SIZE], TT_STRING_SIZE, szTimeText );
+   }
+}
+
+
+FUZZYHOOK_API void SetMidTimeText( int index, LPCWSTR szMidTimeText )
+{
+   if ( index >= 0 && index < MID_COUNT )
+   {
+      wcscpy_s( &g_szMidTimesText[index * MID_STRING_SIZE], MID_STRING_SIZE, szMidTimeText );
+   }
+}
+
+
+FUZZYHOOK_API void SetHighTimeText( int index, LPCWSTR szHighTimeText )
+{
+   if ( index >= 0 && index < HIGH_COUNT )
+   {
+      wcscpy_s( &g_szHighTimesText[index * HIGH_STRING_SIZE], HIGH_STRING_SIZE, szHighTimeText );
    }
 }
 
@@ -248,6 +276,25 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
       InvalidateRect( hWnd, NULL, TRUE );
 
       return 0;
+   }
+   else if ( RWM_SETFUZZINESS == message )
+   {
+      if ( wParam != g_level )
+      {
+         g_level = (FuzzinessLevel)wParam;
+
+         if ( g_bShowFuzzy )
+         {
+            SetTime();
+            InvalidateRect( hWnd, NULL, TRUE );
+         }
+      }
+
+      return 0;
+   }
+   else if ( RWM_GETFUZZINESS == message )
+   {
+      return g_level;
    }
 
    switch ( message )
@@ -696,6 +743,18 @@ void GetPreciseTime( std::wstring& strTime )
 
 int GetFuzzyTimeSector( const SYSTEMTIME& systemTime )
 {
+   switch ( g_level )
+   {
+   case Lower:
+      return GetLowerFuzzyTimeSector( systemTime );
+
+   case Higher:
+      return GetMidFuzzyTimeSector( systemTime );
+
+   case Highest:
+      return GetHighFuzzyTimeSector( systemTime );
+   }
+
    int sector = 0;
 
    int seconds = systemTime.wMinute * 60 + systemTime.wSecond;
@@ -715,6 +774,17 @@ int GetFuzzyTime( std::wstring& strFuzzyTime )
    GetLocalTime( &systemTime );
 
    int sector = GetFuzzyTimeSector( systemTime );
+
+   switch ( g_level )
+   {
+   case Lower:
+      sector = GetLowerFuzzyTimeSector( systemTime );
+      break;
+   case Higher:
+      return GetMidFuzzyTime( systemTime, strFuzzyTime );
+   case Highest:
+      return GetHighFuzzyTime( systemTime, strFuzzyTime );
+   }
 
    std::wstring timeString( &g_szTimesText[sector * TT_STRING_SIZE] );
 
@@ -770,4 +840,66 @@ void SetTime()
    {
       GetPreciseTime( g_strTime );
    }
+}
+
+
+int GetLowerFuzzyTimeSector( const SYSTEMTIME& systemTime )
+{
+   int sector = 0;
+
+   int seconds = systemTime.wMinute * 60 + systemTime.wSecond;
+
+   if ( seconds > 450 )
+   {
+      sector = ( ( seconds - 450 ) / 900 + 1 ) * 3;
+   }
+
+   return sector;
+}
+
+
+int GetMidFuzzyTimeSector( const SYSTEMTIME& systemTime )
+{
+   return ( systemTime.wHour / 3 );
+}
+
+
+int GetHighFuzzyTimeSector( const SYSTEMTIME& systemTime )
+{
+   int day = systemTime.wDayOfWeek;
+
+   if ( 1 == day )
+   {
+      return 0;
+   }
+   else if ( day >= 2 && day <= 4 )
+   {
+      return 1;
+   }
+   else if ( 5 == day )
+   {
+      return 2;
+   }
+
+   return 3;
+}
+
+
+int GetMidFuzzyTime( const SYSTEMTIME& systemTime, std::wstring& strMidFuzzyTime )
+{
+   int sector = GetMidFuzzyTimeSector( systemTime );
+
+   strMidFuzzyTime = &g_szMidTimesText[sector * MID_STRING_SIZE];
+
+   return sector;
+}
+
+
+int GetHighFuzzyTime( const SYSTEMTIME& systemTime, std::wstring& strHighFuzzyTime )
+{
+   int sector = GetHighFuzzyTimeSector( systemTime );
+
+   strHighFuzzyTime = &g_szHighTimesText[sector * HIGH_STRING_SIZE];
+      
+   return sector;
 }

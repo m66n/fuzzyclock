@@ -1,4 +1,4 @@
-// Copyright (c) 2007 Michael Chapman
+// Copyright (c) 2008 Michael Chapman
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@
 
 #include "stdafx.h"
 #include "XMLHelper.h"
-
+#include ".\FuzzyHook\FuzzyHook.h"
 #import <msxml.dll>
 
 
@@ -73,6 +73,21 @@ bool XMLHelper::LoadFile( LPCWSTR szFileName )
          {
             return false;
          }
+
+         pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//fuzziness_text" );
+
+         if ( !ParseFuzzinessText( pNode ) )
+         {
+            return false;
+         }
+
+         pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//fuzziness_levels" );
+
+         if ( !ParseFuzzinessLevelsText( pNode ) )
+         {
+            return false;
+         }
+
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//hours_text" );
 
          if ( !ParseHoursText( pNode ) )
@@ -82,7 +97,21 @@ bool XMLHelper::LoadFile( LPCWSTR szFileName )
 
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//times_text" );
 
-         return ParseTimesText( pNode );
+         if ( !ParseTimesText( pNode ) )
+         {
+            return false;
+         }
+
+         pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//mid_times_text" );
+
+         if ( !ParseMidTimesText( pNode ) )
+         {
+            return false;
+         }
+
+         pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//high_times_text" );
+
+         return ParseHighTimesText( pNode );
       }
       else
       {
@@ -153,6 +182,33 @@ bool XMLHelper::ParseExitText( MSXML::IXMLDOMNodePtr pNode )
 }
 
 
+bool XMLHelper::ParseFuzzinessText( MSXML::IXMLDOMNodePtr pNode )
+{
+   if ( pNode )
+   {
+      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+
+      if ( pChildren )
+      {
+         pNode = pChildren->nextNode();
+
+         if ( pNode )
+         {
+            _variant_t varData = pNode->GetnodeValue();
+
+            if ( varData.vt != VT_NULL )
+            {
+               fuzzinessText_ = (LPCWSTR)(varData.bstrVal);
+               return true;
+            }            
+         }
+      }
+   }
+
+   return false;
+}
+
+
 bool XMLHelper::ParseHourText( MSXML::IXMLDOMNodePtr pNode )
 {
    int index = -1;
@@ -190,7 +246,7 @@ bool XMLHelper::ParseHourText( MSXML::IXMLDOMNodePtr pNode )
 
             if ( varData.vt != VT_NULL )
             {
-               if ( index >= 0 )
+               if ( index >= 0 && index < HT_COUNT )
                {
                   hoursText_[index] = (LPCWSTR)(varData.bstrVal);
                   return true;
@@ -208,7 +264,7 @@ bool XMLHelper::ParseHoursText( MSXML::IXMLDOMNodePtr pNode )
 {
    hoursText_.clear();
 
-   hoursText_.resize( 12 );
+   hoursText_.resize( HT_COUNT );
 
    if ( pNode )
    {
@@ -270,7 +326,7 @@ bool XMLHelper::ParseTimeText( MSXML::IXMLDOMNodePtr pNode )
 
             if ( varData.vt != VT_NULL )
             {
-               if ( index >= 0 )
+               if ( index >= 0 && index < TT_COUNT )
                {
                   timesText_[index] = (LPCWSTR)(varData.bstrVal);
                   return true;
@@ -288,7 +344,7 @@ bool XMLHelper::ParseTimesText( MSXML::IXMLDOMNodePtr pNode )
 {
    timesText_.clear();
 
-   timesText_.resize( 13 );
+   timesText_.resize( TT_COUNT );
 
    if ( pNode )
    {
@@ -299,6 +355,240 @@ bool XMLHelper::ParseTimesText( MSXML::IXMLDOMNodePtr pNode )
          while ( pNode = pChildren->nextNode() )
          {
             if ( !ParseTimeText( pNode ) )
+            {
+               return false;
+            }
+         }
+      }
+   }
+
+   return true;
+}
+
+
+bool XMLHelper::ParseMidTimeText( MSXML::IXMLDOMNodePtr pNode )
+{
+   int index = -1;
+
+   if ( pNode )
+   {
+      MSXML::IXMLDOMNamedNodeMapPtr pAttrMap = pNode->Getattributes();
+
+      if ( NULL != pAttrMap )
+      {
+         MSXML::IXMLDOMAttributePtr pAttribute;
+         while ( pAttribute = pAttrMap->nextNode() )
+         {
+            if ( pAttribute->Getname() == _bstr_t( "index" ) )
+            {
+               _variant_t varIndex = pAttribute->Getvalue();
+
+               if ( varIndex.vt != VT_NULL )
+               {
+                  index = _wtoi( (LPCWSTR)(varIndex.bstrVal) );
+               }
+            }
+         }
+      }
+
+      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+
+      if ( pChildren )
+      {
+         pNode = pChildren->nextNode();
+
+         if ( pNode )
+         {
+            _variant_t varData;
+            pNode->get_nodeValue( varData.GetAddress() );
+
+            if ( varData.vt != VT_NULL )
+            {
+               if ( index >= 0 && index < MID_COUNT )
+               {
+                  midTimesText_[index] = (LPCWSTR)(varData.bstrVal);
+                  return true;
+               }
+            }            
+         }
+      }
+   }
+
+   return false;
+}
+
+
+bool XMLHelper::ParseMidTimesText( MSXML::IXMLDOMNodePtr pNode )
+{
+   midTimesText_.clear();
+
+   midTimesText_.resize( MID_COUNT );
+
+   if ( pNode )
+   {
+      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+
+      if ( pChildren )
+      {
+         while ( pNode = pChildren->nextNode() )
+         {
+            if ( !ParseMidTimeText( pNode ) )
+            {
+               return false;
+            }
+         }
+      }
+   }
+
+   return true;
+}
+
+
+bool XMLHelper::ParseHighTimeText( MSXML::IXMLDOMNodePtr pNode )
+{
+   int index = -1;
+
+   if ( pNode )
+   {
+      MSXML::IXMLDOMNamedNodeMapPtr pAttrMap = pNode->Getattributes();
+
+      if ( NULL != pAttrMap )
+      {
+         MSXML::IXMLDOMAttributePtr pAttribute;
+         while ( pAttribute = pAttrMap->nextNode() )
+         {
+            if ( pAttribute->Getname() == _bstr_t( "index" ) )
+            {
+               _variant_t varIndex = pAttribute->Getvalue();
+
+               if ( varIndex.vt != VT_NULL )
+               {
+                  index = _wtoi( (LPCWSTR)(varIndex.bstrVal) );
+               }
+            }
+         }
+      }
+
+      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+
+      if ( pChildren )
+      {
+         pNode = pChildren->nextNode();
+
+         if ( pNode )
+         {
+            _variant_t varData;
+            pNode->get_nodeValue( varData.GetAddress() );
+
+            if ( varData.vt != VT_NULL )
+            {
+               if ( index >= 0 && index < HIGH_COUNT )
+               {
+                  highTimesText_[index] = (LPCWSTR)(varData.bstrVal);
+                  return true;
+               }
+            }            
+         }
+      }
+   }
+
+   return false;
+}
+
+
+bool XMLHelper::ParseHighTimesText( MSXML::IXMLDOMNodePtr pNode )
+{
+   highTimesText_.clear();
+
+   highTimesText_.resize( HIGH_COUNT );
+
+   if ( pNode )
+   {
+      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+
+      if ( pChildren )
+      {
+         while ( pNode = pChildren->nextNode() )
+         {
+            if ( !ParseHighTimeText( pNode ) )
+            {
+               return false;
+            }
+         }
+      }
+   }
+
+   return true;
+}
+
+
+bool XMLHelper::ParseFuzzinessLevelText( MSXML::IXMLDOMNodePtr pNode )
+{
+   int index = -1;
+
+   if ( pNode )
+   {
+      MSXML::IXMLDOMNamedNodeMapPtr pAttrMap = pNode->Getattributes();
+
+      if ( NULL != pAttrMap )
+      {
+         MSXML::IXMLDOMAttributePtr pAttribute;
+         while ( pAttribute = pAttrMap->nextNode() )
+         {
+            if ( pAttribute->Getname() == _bstr_t( "index" ) )
+            {
+               _variant_t varIndex = pAttribute->Getvalue();
+
+               if ( varIndex.vt != VT_NULL )
+               {
+                  index = _wtoi( (LPCWSTR)(varIndex.bstrVal) );
+               }
+            }
+         }
+      }
+
+      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+
+      if ( pChildren )
+      {
+         pNode = pChildren->nextNode();
+
+         if ( pNode )
+         {
+            _variant_t varData;
+            pNode->get_nodeValue( varData.GetAddress() );
+
+            if ( varData.vt != VT_NULL )
+            {
+               if ( index >= 0 && index < (int)fuzzinessLevelsText_.size() )
+               {
+                  fuzzinessLevelsText_[index] = (LPCWSTR)(varData.bstrVal);
+                  return true;
+               }
+            }            
+         }
+      }
+   }
+
+   return false;
+}
+
+
+bool XMLHelper::ParseFuzzinessLevelsText( MSXML::IXMLDOMNodePtr pNode )
+{
+   fuzzinessLevelsText_.clear();
+
+   fuzzinessLevelsText_.resize( 4 );
+
+   if ( pNode )
+   {
+      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+
+      if ( pChildren )
+      {
+         while ( pNode = pChildren->nextNode() )
+         {
+            if ( !ParseFuzzinessLevelText( pNode ) )
             {
                return false;
             }

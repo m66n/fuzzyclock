@@ -1,4 +1,4 @@
-// Copyright (c) 2007 Michael Chapman
+// Copyright (c) 2008 Michael Chapman
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -39,23 +39,42 @@ public:
 
    const std::wstring& GetApplicationName() const { return applicationName_; }
    const std::wstring& GetExitText() const { return exitText_; }
+   const std::wstring& GetFuzzinessText() const { return fuzzinessText_; }
    const std::wstring& GetHourText( int index ) const { return hoursText_[index]; }
    const std::wstring& GetTimeText( int index ) const { return timesText_[index]; }
+   const std::wstring& GetMidTimeText( int index ) const { return midTimesText_[index]; }
+   const std::wstring& GetHighTimeText( int index ) const { return highTimesText_[index]; }
+   const std::wstring& GetFuzzinessLevelText( int index ) const { return fuzzinessLevelsText_[index]; }
+
 
    size_t GetHoursTextCount() const { return hoursText_.size(); }
    size_t GetTimesTextCount() const { return timesText_.size(); }
+   size_t GetMidTimesTextCount() const { return midTimesText_.size(); }
+   size_t GetHighTimesTextCount() const { return highTimesText_.size(); }
+   size_t GetFuzzinessLevelsTextCount() const { return fuzzinessLevelsText_.size(); }
 
 private:
 
    bool ParseApplicationName( MSXML::IXMLDOMNodePtr pNode );
    bool ParseExitText( MSXML::IXMLDOMNodePtr pNode );
+   bool ParseFuzzinessText( MSXML::IXMLDOMNodePtr pNode );
    bool ParseHoursText( MSXML::IXMLDOMNodePtr pNode );
    bool ParseHourText( MSXML::IXMLDOMNodePtr pNode );
    bool ParseTimesText( MSXML::IXMLDOMNodePtr pNode );
    bool ParseTimeText( MSXML::IXMLDOMNodePtr pNode );
+   bool ParseMidTimesText( MSXML::IXMLDOMNodePtr pNode );
+   bool ParseMidTimeText( MSXML::IXMLDOMNodePtr pNode );
+   bool ParseHighTimesText( MSXML::IXMLDOMNodePtr pNode );
+   bool ParseHighTimeText( MSXML::IXMLDOMNodePtr pNode );
+   bool ParseFuzzinessLevelsText( MSXML::IXMLDOMNodePtr pNode );
+   bool ParseFuzzinessLevelText( MSXML::IXMLDOMNodePtr pNode );
 
    std::wstring applicationName_;
    std::wstring exitText_;
+   std::wstring fuzzinessText_;
    std::vector<std::wstring> hoursText_;
    std::vector<std::wstring> timesText_;
+   std::vector<std::wstring> midTimesText_;
+   std::vector<std::wstring> highTimesText_;
+   std::vector<std::wstring> fuzzinessLevelsText_;
 };

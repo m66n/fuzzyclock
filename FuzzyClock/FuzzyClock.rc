@@ -50,6 +50,13 @@ IDR_TRAYMENU MENU
 BEGIN
     POPUP "_POPUP_"
     BEGIN
+        POPUP "Levels"
+        BEGIN
+            MENUITEM "0",                       ID_FUZZINESS_LOWEST
+            MENUITEM "1",                       ID_FUZZINESS_LOWER
+            MENUITEM "2",                       ID_FUZZINESS_HIGHER
+            MENUITEM "3",                       ID_FUZZINESS_HIGHEST
+        END
         MENUITEM "Exit",                        IDM_EXIT
     END
 END
@@ -89,8 +96,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,4,0,35
- PRODUCTVERSION 1,4,0,35
+ FILEVERSION 1,5,0,38
+ PRODUCTVERSION 1,5,0,38
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -107,12 +114,12 @@ BEGIN
         BEGIN
             VALUE "Comments", "fuzzyclock.googlecode.com"
             VALUE "FileDescription", "FuzzyClock Application"
-            VALUE "FileVersion", "1.4.0.35"
+            VALUE "FileVersion", "1, 5, 0, 38"
             VALUE "InternalName", "FuzzyClock"
             VALUE "LegalCopyright", "Copyright (c) 2007 Michael Chapman"
             VALUE "OriginalFilename", "FuzzyClock.exe"
             VALUE "ProductName", "FuzzyClock Application"
-            VALUE "ProductVersion", "1.4.0.35"
+            VALUE "ProductVersion", "1, 5, 0, 38"
         END
     END
     BLOCK "VarFileInfo"
