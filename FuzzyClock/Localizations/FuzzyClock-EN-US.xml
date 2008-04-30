@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<fuzzy_clock>
+   <application_name>FuzzyClock</application_name>
+   <exit_text>Exit</exit_text>
+   <fuzziness_text>Fuzziness</fuzziness_text>
+   <fuzziness_levels>
+      <fuzziness_level index="0">Lowest</fuzziness_level>
+      <fuzziness_level index="1">Lower</fuzziness_level>
+      <fuzziness_level index="2">Higher</fuzziness_level>
+      <fuzziness_level index="3">Highest</fuzziness_level>
+   </fuzziness_levels>
+   <hours_text>
+      <hour_text index="0">one</hour_text>
+      <hour_text index="1">two</hour_text>
+      <hour_text index="2">three</hour_text>
+      <hour_text index="3">four</hour_text>
+      <hour_text index="4">five</hour_text>
+      <hour_text index="5">six</hour_text>
+      <hour_text index="6">seven</hour_text>
+      <hour_text index="7">eight</hour_text>
+      <hour_text index="8">nine</hour_text>
+      <hour_text index="9">ten</hour_text>
+      <hour_text index="10">eleven</hour_text>
+      <hour_text index="11">twelve</hour_text>
+   </hours_text>
+   <times_text>
+      <time_text index="0">%0 o’clock</time_text>
+      <time_text index="1">five past %0</time_text>
+      <time_text index="2">ten past %0</time_text>
+      <time_text index="3">quarter past %0</time_text>
+      <time_text index="4">twenty past %0</time_text>
+      <time_text index="5">twenty five past %0</time_text>
+      <time_text index="6">half past %0</time_text>
+      <time_text index="7">twenty five to %1</time_text>
+      <time_text index="8">twenty to %1</time_text>
+      <time_text index="9">quarter to %1</time_text>
+      <time_text index="10">ten to %1</time_text>
+      <time_text index="11">five to %1</time_text>
+      <time_text index="12">%1 o’clock</time_text>
+   </times_text>
+   <mid_times_text>
+      <mid_time_text index="0">Night</mid_time_text>
+      <mid_time_text index="1">Early morning</mid_time_text>
+      <mid_time_text index="2">Morning</mid_time_text>
+      <mid_time_text index="3">Almost noon</mid_time_text>
+      <mid_time_text index="4">Noon</mid_time_text>
+      <mid_time_text index="5">Afternoon</mid_time_text>
+      <mid_time_text index="6">Evening</mid_time_text>
+      <mid_time_text index="7">Late evening</mid_time_text>
+   </mid_times_text>
+   <high_times_text>
+      <high_time_text index="0">Start of week</high_time_text>
+      <high_time_text index="1">Middle of week</high_time_text>
+      <high_time_text index="2">End of week</high_time_text>
+      <high_time_text index="3">Weekend!</high_time_text>
+   </high_times_text>
+</fuzzy_clock>
