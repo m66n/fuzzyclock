@@ -1,4 +1,4 @@
-FuzzyClock 1.4 (revision 33) 16 April 2008
+FuzzyClock 1.4.1 (revision 43) 11 May 2009
 
 http://fuzzyclock.googlecode.com
 
@@ -9,25 +9,36 @@ Installation
 Files\FuzzyClock).
 
 2. The default language is English. Additional languages can be found
-within Localizations.zip. Copy one of the FuzzyClock-XX.xml files to the
-FuzzyClock folder and rename it FuzzyClock.xml.  Restart FuzzyClock if
-necessary.
+within Localizations.zip.  Drag and drop a localization file onto the icon
+representing FuzzyClock.exe and that localization will be used.  The
+localization file is stored in %APPDATA%\FuzzyClock as FuzzyClock.xml.
+
+   * In Windows 2000, XP, and Server 2003, %APPDATA% is located at
+     x:\Documents and Settings\<username>\Application Data
+	 
+   * In Windows Vista, %APPDATA% is located at
+     x:\Users\<username>\AppData\Roaming
 
 3. To start FuzzyClock with Windows, create a shortcut for
-FuzzyClock.exe and place it in C:\Documents and Settings\<your user
-name>\Start Menu\Programs\Startup.
+FuzzyClock.exe and place it in %STARTMENU%\Programs\Startup.
+
+   * In Windows 2000, XP, and Server 2003, %STARTMENU% is located at
+     x:\Documents and Settings\<username>\Start Menu
+	 
+   * In Windows Vista, %STARTMENU% is located at
+     x:\Users\<username>\AppData\Roaming\Microsoft\Windows\Start Menu
 
 
 Use
 
-1. Right click on FuzzyClock tray icon to exit program.
+1. Right-click (or double-click) on FuzzyClock tray icon to exit program.
 
 2. Click on FuzzyClock tray icon to toggle between fuzzy and precise
 times.
 
 
 
-Copyright (c) 2007 Michael Chapman
+Copyright (c) 2009 Michael Chapman
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
@@ -47,4 +58,3 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
 CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-

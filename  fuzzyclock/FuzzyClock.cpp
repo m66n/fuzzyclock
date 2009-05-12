@@ -28,11 +28,6 @@
 #include <vector>
 #include <string>
 
-#ifdef _UNICODE
-typedef std::wstring tstring;
-#else
-typedef std::string tstring;
-#endif
 
 #define MAX_LOADSTRING 100
 #define LOAD_XML 32670
@@ -62,9 +57,12 @@ const UINT RWM_TASKBARCREATED = RegisterWindowMessage( _T("TaskbarCreated") );
 BOOL AddTrayIcon( HWND, LPCWSTR, HICON, UINT );
 void CALLBACK DelayedSingleClick( HWND, UINT, UINT_PTR, DWORD );
 BOOL CALLBACK EnumWindowsProc( HWND, LPARAM );
-tstring GetDefaultXMLFile( LPCTSTR );
+std::wstring GetAppDataPath();
+std::wstring GetArgPath();
+std::wstring GetDefaultXMLFile( LPCWSTR );
 HWND GetTrayClock();
-tstring GetXMLFile();
+std::wstring GetXMLFile();
+std::wstring GetXMLPath();
 BOOL InitInstance( HINSTANCE, int );
 LRESULT OnIdentity( WPARAM, LPARAM );
 LRESULT OnTaskbarCreated( WPARAM, LPARAM );
@@ -72,6 +70,7 @@ LRESULT OnTrayIcon( WPARAM, LPARAM );
 BOOL ProcessXMLFile( LPCWSTR );
 ATOM RegisterWindow( HINSTANCE );
 BOOL RemoveTrayIcon();
+void ReplaceXMLFile( LPCWSTR );
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 void SetTrayIconText( LPCWSTR );
 
@@ -84,36 +83,29 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
    UNREFERENCED_PARAMETER( hPrevInstance );
    UNREFERENCED_PARAMETER( lpCmdLine );
 
+   std::wstring argPath = GetArgPath();
+
    HANDLE hMutexSingleInstance = CreateMutex( NULL, FALSE,
       _T("FuzzyClock__8E5405E2_BD48_41cd_AAF4_C7183EA13CBB") );
 
    if ( GetLastError() == ERROR_ALREADY_EXISTS ||
-      GetLastError() == ERROR_ACCESS_DENIED )
+        GetLastError() == ERROR_ACCESS_DENIED )
    {
       HWND hRunning = NULL;
 
       EnumWindows( EnumWindowsProc, (LPARAM)&hRunning );
 
-      if ( ( NULL != hRunning ) && ( _tcslen( lpCmdLine ) > 0 ) )
+      if ( ( NULL != hRunning ) && !argPath.empty() )
       {
-         int argsCount = 0;
+         COPYDATASTRUCT cds;
 
-         LPWSTR* szArgList = CommandLineToArgvW( GetCommandLineW(), &argsCount );
+         cds.dwData = LOAD_XML;
+         cds.cbData = (DWORD)(( argPath.length() + 1 ) * sizeof( wchar_t ));
+         cds.lpData = (void*)argPath.c_str();
 
-         if ( argsCount > 1 )
-         {
-            COPYDATASTRUCT cds;
-
-            cds.dwData = LOAD_XML;
-            cds.cbData = ( (int)wcslen( szArgList[1] ) + 1 ) * sizeof( wchar_t );
-            cds.lpData = szArgList[1];
-
-            DWORD result = 0;
-            SendMessageTimeout( hRunning, WM_COPYDATA, 0, (LPARAM)&cds,
-               SMTO_BLOCK | SMTO_ABORTIFHUNG, 100, &result );
-         }
-
-         LocalFree( szArgList );
+         DWORD_PTR result = NULL;
+         SendMessageTimeout( hRunning, WM_COPYDATA, 0, (LPARAM)&cds,
+            SMTO_BLOCK | SMTO_ABORTIFHUNG, 100, &result );
       }
 
       return FALSE;
@@ -129,7 +121,12 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
       return FALSE;
    }
 
-   tstring xmlFile = GetXMLFile();
+   if ( !argPath.empty() )
+   {
+      ReplaceXMLFile( argPath.c_str() );
+   }
+
+   std::wstring xmlFile = GetXMLFile();
 
    if ( xmlFile.empty() )
    {
@@ -141,7 +138,14 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
       return FALSE;
    }
 
-   Hook( GetTrayClock() );
+   HWND hwndClock = GetTrayClock();
+
+   if ( NULL == hwndClock )
+   {
+      return FALSE;
+   }
+
+   Hook( hwndClock );
 
    MSG msg;
 
@@ -169,12 +173,12 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
 
 BOOL CALLBACK EnumWindowsProc( HWND hWnd, LPARAM lParam )
 {
-   DWORD result = 0;
+   DWORD_PTR result = NULL;
 
    BOOL success = (BOOL)SendMessageTimeout( hWnd, RWM_IDENTITY, 0, 0,
       SMTO_BLOCK | SMTO_ABORTIFHUNG, 100, &result );
 
-   if ( success && RWM_IDENTITY == result )
+   if ( success && ( RWM_IDENTITY == result ) )
    {
       HWND* pTarget = (HWND*)lParam;
       *pTarget = hWnd;
@@ -291,7 +295,9 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 
       if ( pCDS->dwData == LOAD_XML )
       {
-         if ( ProcessXMLFile( (LPCWSTR)(pCDS->lpData) ) )
+         ReplaceXMLFile( (LPCWSTR)(pCDS->lpData) );
+
+         if ( ProcessXMLFile( GetXMLFile().c_str() ) )
          {
             SetTrayIconText( g_xmlHelper.GetApplicationName().c_str() );
             Invalidate();
@@ -449,22 +455,11 @@ HWND GetTrayClock()
 }
 
 
-tstring GetXMLFile()
+std::wstring GetXMLFile()
 {
    WIN32_FIND_DATAW findFileData;
 
-   DWORD numChars = GetCurrentDirectory( 0, NULL );
-
-   std::vector<TCHAR> szDirectory( numChars );
-
-   if ( GetCurrentDirectory( numChars, &szDirectory[0] ) != ( numChars - 1 ) )
-   {
-      return _T("");
-   }
-
-   tstring strDirectory( &szDirectory[0] );
-
-   tstring strFilePath = strDirectory + _T("\\") + _T("FuzzyClock.xml");
+   std::wstring strFilePath = GetXMLPath();
 
    HANDLE hFind = FindFirstFile( strFilePath.c_str(), &findFileData );
 
@@ -479,15 +474,15 @@ tstring GetXMLFile()
 }
 
 
-tstring GetDefaultXMLFile( LPCTSTR szDefaultPath )
+std::wstring GetDefaultXMLFile( LPCWSTR szDefaultPath )
 {
-   TCHAR szResourceID[16];
+   WCHAR szResourceID[16];
    szResourceID[0] = _T('#');
-   _itot_s( IDR_XMLDEFAULT, &szResourceID[1], 15, 10 );
+   _itow_s( IDR_XMLDEFAULT, &szResourceID[1], 15, 10 );
 
-   LPCTSTR szResourceType = _T("XMLFILE");
+   LPCWSTR szResourceType = _T("XMLFILE");
 
-   HRSRC hres = FindResource( NULL, szResourceID, szResourceType );
+   HRSRC hres = FindResourceW( NULL, szResourceID, szResourceType );
 
    if ( NULL == hres )
    {
@@ -500,27 +495,27 @@ tstring GetDefaultXMLFile( LPCTSTR szDefaultPath )
 
    LPVOID pData = LockResource( hbytes );
 
-   tstring strFilePath;
+   std::wstring strFilePath;
 
-   HANDLE hfile = CreateFile( szDefaultPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+   HANDLE hfile = CreateFileW( szDefaultPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
 
    if ( INVALID_HANDLE_VALUE == hfile )
    {
-      int numChars = GetTempPath( 0, NULL );
+      int numChars = GetTempPathW( 0, NULL );
 
-      std::vector<TCHAR> szTempDir( numChars );
+      std::vector<WCHAR> szTempDir( numChars );
 
-      if ( GetTempPath( numChars, &szTempDir[0] ) != ( numChars - 1 ) )
+      if ( GetTempPathW( numChars, &szTempDir[0] ) != ( numChars - 1 ) )
       {
          return _T("");
       }
 
-      TCHAR szTempFileName[MAX_PATH+1];
+      WCHAR szTempFileName[MAX_PATH+1];
 
-      GetTempFileName( &szTempDir[0], _T("FUZ"), 0, szTempFileName );
+      GetTempFileNameW( &szTempDir[0], _T("FUZ"), 0, szTempFileName );
 
-      hfile = CreateFile( szTempFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+      hfile = CreateFileW( szTempFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL,
          CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
 
       if ( INVALID_HANDLE_VALUE == hfile )
@@ -563,6 +558,9 @@ void SetTrayIconText( LPCWSTR szText )
 
 LRESULT OnTaskbarCreated( WPARAM, LPARAM )
 {
+   // This is a kludge for when explorer.exe crashes.  Calling Hook() again did not
+   // appear to work.  Program just exits instead.
+   //
    SendMessage( g_hWnd, WM_COMMAND, MAKEWORD( IDM_EXIT, 0 ), 0 );
    return 0;
 }
@@ -572,4 +570,67 @@ void CALLBACK DelayedSingleClick( HWND hwnd, UINT, UINT_PTR id, DWORD )
 {
    KillTimer( hwnd, id );
    PostMessage( GetTrayClock(), RWM_TOGGLE, 0, 0 );
+}
+
+
+std::wstring GetAppDataPath()
+{
+   std::wstring path;
+
+   WCHAR szPath[MAX_PATH];
+
+   HRESULT hr = SHGetFolderPathW( NULL, CSIDL_APPDATA, NULL,
+      SHGFP_TYPE_CURRENT, szPath );
+
+   if ( SUCCEEDED( hr ) )
+   {
+      PathAppendW( szPath, _T("FuzzyClock") );
+      SHCreateDirectoryExW( NULL, szPath, NULL );
+      path = szPath;
+   }
+
+   return path;
+}
+
+
+std::wstring GetArgPath()
+{
+   std::wstring path;
+
+   int argsCount = 0;
+
+   LPWSTR* szArgList = CommandLineToArgvW( GetCommandLine(), &argsCount );
+
+   if ( argsCount > 1 )
+   {
+      path = szArgList[1];
+   }
+
+   LocalFree( szArgList );
+
+   return path;
+}
+
+
+std::wstring GetXMLPath()
+{
+   WCHAR szPath[MAX_PATH];
+   
+   size_t numChars = GetAppDataPath().copy( szPath, MAX_PATH );
+
+   szPath[numChars] = _T('\0');
+
+   PathAppendW( szPath, _T("FuzzyClock.xml") );
+
+   std::wstring path( szPath );
+
+   return path;
+}
+
+
+void ReplaceXMLFile( LPCTSTR newPath )
+{
+   std::wstring existingPath = GetXMLPath();
+
+   CopyFileW( newPath, existingPath.c_str(), FALSE );
 }

@@ -23,7 +23,6 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "FuzzyHook.h"
-//#include "WriteLog.h"  // for debugging
 #include <string>
 #include <vector>
 
@@ -162,7 +161,7 @@ FUZZYHOOK_API void Invalidate()
 
 LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
 {
-   LPCWPSTRUCT pCWP = reinterpret_cast<LPCWPSTRUCT>(lParam);
+   LPCWPSTRUCT pCWP = (LPCWPSTRUCT)lParam;
 
    if ( NULL != pCWP && RWM_FUZZYHOOK == pCWP->message )
    {
@@ -172,12 +171,14 @@ LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
 
          if ( !g_subclassed )
          {
-            TCHAR dllPath[MAX_PATH+1];
-            GetModuleFileName( g_hInst, dllPath, MAX_PATH+1 );
+            TCHAR dllPath[ MAX_PATH + 1 ];
+            GetModuleFileName( g_hInst, dllPath, MAX_PATH + 1 );
 
             if ( LoadLibrary( dllPath ) )
             {
-               g_wndProcOld = (WNDPROC)(intptr_t)SetWindowLong( g_hWnd, GWL_WNDPROC, (long)(intptr_t)NewWndProc );
+               SetLastError( 0 );
+
+               g_wndProcOld = (WNDPROC)SetWindowLongPtr( g_hWnd, GWLP_WNDPROC, (LONG_PTR)NewWndProc );
 
                if ( NULL == g_wndProcOld )
                {
@@ -202,7 +203,7 @@ LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
 
          UnhookWindowsHookEx( g_hHook );
 
-         if ( SetWindowLong( g_hWnd, GWL_WNDPROC, (long)(intptr_t)g_wndProcOld ) )
+         if ( SetWindowLongPtr( g_hWnd, GWLP_WNDPROC, (LONG_PTR)g_wndProcOld ) )
          {
             Cleanup();
             FreeLibrary( g_hInst );
