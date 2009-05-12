@@ -461,7 +461,7 @@ std::wstring GetXMLFile()
 
    std::wstring strFilePath = GetXMLPath();
 
-   HANDLE hFind = FindFirstFile( strFilePath.c_str(), &findFileData );
+   HANDLE hFind = FindFirstFileW( strFilePath.c_str(), &findFileData );
 
    if ( INVALID_HANDLE_VALUE == hFind )
    {
@@ -477,16 +477,16 @@ std::wstring GetXMLFile()
 std::wstring GetDefaultXMLFile( LPCWSTR szDefaultPath )
 {
    WCHAR szResourceID[16];
-   szResourceID[0] = _T('#');
+   szResourceID[0] = L'#';
    _itow_s( IDR_XMLDEFAULT, &szResourceID[1], 15, 10 );
 
-   LPCWSTR szResourceType = _T("XMLFILE");
+   LPCWSTR szResourceType = L"XMLFILE";
 
    HRSRC hres = FindResourceW( NULL, szResourceID, szResourceType );
 
    if ( NULL == hres )
    {
-      return _T("");
+      return L"";
    }
 
    DWORD sizeResource = SizeofResource( NULL, hres );
@@ -508,19 +508,19 @@ std::wstring GetDefaultXMLFile( LPCWSTR szDefaultPath )
 
       if ( GetTempPathW( numChars, &szTempDir[0] ) != ( numChars - 1 ) )
       {
-         return _T("");
+         return L"";
       }
 
       WCHAR szTempFileName[MAX_PATH+1];
 
-      GetTempFileNameW( &szTempDir[0], _T("FUZ"), 0, szTempFileName );
+      GetTempFileNameW( &szTempDir[0], L"FUZ", 0, szTempFileName );
 
       hfile = CreateFileW( szTempFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL,
          CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
 
       if ( INVALID_HANDLE_VALUE == hfile )
       {
-         return _T("");
+         return L"";
       }
 
       strFilePath = szTempFileName;
@@ -584,7 +584,7 @@ std::wstring GetAppDataPath()
 
    if ( SUCCEEDED( hr ) )
    {
-      PathAppendW( szPath, _T("FuzzyClock") );
+      PathAppendW( szPath, L"FuzzyClock" );
       SHCreateDirectoryExW( NULL, szPath, NULL );
       path = szPath;
    }
@@ -599,7 +599,7 @@ std::wstring GetArgPath()
 
    int argsCount = 0;
 
-   LPWSTR* szArgList = CommandLineToArgvW( GetCommandLine(), &argsCount );
+   LPWSTR* szArgList = CommandLineToArgvW( GetCommandLineW(), &argsCount );
 
    if ( argsCount > 1 )
    {
@@ -618,9 +618,9 @@ std::wstring GetXMLPath()
    
    size_t numChars = GetAppDataPath().copy( szPath, MAX_PATH );
 
-   szPath[numChars] = _T('\0');
+   szPath[numChars] = L'\0';
 
-   PathAppendW( szPath, _T("FuzzyClock.xml") );
+   PathAppendW( szPath, L"FuzzyClock.xml" );
 
    std::wstring path( szPath );
 
@@ -628,7 +628,7 @@ std::wstring GetXMLPath()
 }
 
 
-void ReplaceXMLFile( LPCTSTR newPath )
+void ReplaceXMLFile( LPCWSTR newPath )
 {
    std::wstring existingPath = GetXMLPath();
 
