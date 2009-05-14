@@ -1,4 +1,4 @@
-// Copyright (c) 2007 Michael Chapman
+// Copyright (c) 2009 Michael Chapman (http://fuzzyclock.googlecode.com)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -25,8 +25,11 @@
 #include "./FuzzyHook/FuzzyHook.h"
 #include "XMLHelper.h"
 #include <ShellAPI.h>
-#include <vector>
+
+#include <fstream>
+#include <ios>
 #include <string>
+#include <vector>
 
 
 #define MAX_LOADSTRING 100
@@ -55,11 +58,12 @@ const UINT RWM_TASKBARCREATED = RegisterWindowMessage( _T("TaskbarCreated") );
 
 
 BOOL AddTrayIcon( HWND, LPCWSTR, HICON, UINT );
+std::wstring CreateDefaultXMLFile( LPCWSTR );
 void CALLBACK DelayedSingleClick( HWND, UINT, UINT_PTR, DWORD );
 BOOL CALLBACK EnumWindowsProc( HWND, LPARAM );
+bool FileExists( LPCWSTR );
 std::wstring GetAppDataPath();
 std::wstring GetArgPath();
-std::wstring GetDefaultXMLFile( LPCWSTR );
 HWND GetTrayClock();
 std::wstring GetXMLFile();
 std::wstring GetXMLPath();
@@ -70,9 +74,10 @@ LRESULT OnTrayIcon( WPARAM, LPARAM );
 BOOL ProcessXMLFile( LPCWSTR );
 ATOM RegisterWindow( HINSTANCE );
 BOOL RemoveTrayIcon();
-void ReplaceXMLFile( LPCWSTR );
+bool ReplaceXMLFile( LPCWSTR );
 LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 void SetTrayIconText( LPCWSTR );
+void WriteLog( LPCWSTR output );
 
 
 int APIENTRY _tWinMain( HINSTANCE hInstance,
@@ -118,6 +123,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
 
    if ( !InitInstance( hInstance, nCmdShow ) )
    {
+      WriteLog( L"InitInstance() failed." );
       return FALSE;
    }
 
@@ -130,11 +136,13 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
 
    if ( xmlFile.empty() )
    {
+      WriteLog( L"IGetXMLFile() failed." );
       return FALSE;
    }
 
    if ( !ProcessXMLFile( xmlFile.c_str() ) )
    {
+      WriteLog( L"ProcessXMLFile() failed." );
       return FALSE;
    }
 
@@ -142,10 +150,15 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
 
    if ( NULL == hwndClock )
    {
+      WriteLog( L"GetTrayClock() failed." );
       return FALSE;
    }
 
-   Hook( hwndClock );
+   if ( !Hook( hwndClock ) )
+   {
+      WriteLog( L"Hook() failed." );
+      return FALSE;
+   }
 
    MSG msg;
 
@@ -232,9 +245,18 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 
 BOOL ProcessXMLFile( LPCWSTR szFilePath )
 {
-   if ( !g_xmlHelper.LoadFile( szFilePath ) )
+   std::wstring error;
+
+   if ( !g_xmlHelper.LoadFile( szFilePath, error ) )
    {
-      return FALSE;
+      WriteLog( error.c_str() );
+      CreateDefaultXMLFile( szFilePath );
+
+      if ( !g_xmlHelper.LoadFile( szFilePath, error ) )
+      {
+         WriteLog( error.c_str() );
+         return FALSE;
+      }
    }
 
    for ( UINT index = 0; index < g_xmlHelper.GetHoursTextCount(); ++index )
@@ -465,7 +487,7 @@ std::wstring GetXMLFile()
 
    if ( INVALID_HANDLE_VALUE == hFind )
    {
-      return GetDefaultXMLFile( strFilePath.c_str() );
+      return CreateDefaultXMLFile( strFilePath.c_str() );
    }
 
    FindClose( hFind );
@@ -474,7 +496,7 @@ std::wstring GetXMLFile()
 }
 
 
-std::wstring GetDefaultXMLFile( LPCWSTR szDefaultPath )
+std::wstring CreateDefaultXMLFile( LPCWSTR szDefaultPath )
 {
    WCHAR szResourceID[16];
    szResourceID[0] = L'#';
@@ -495,39 +517,16 @@ std::wstring GetDefaultXMLFile( LPCWSTR szDefaultPath )
 
    LPVOID pData = LockResource( hbytes );
 
-   std::wstring strFilePath;
+   // In case an invalid existing file is read-only
+   //
+   SetFileAttributesW( szDefaultPath, FILE_ATTRIBUTE_NORMAL );
 
    HANDLE hfile = CreateFileW( szDefaultPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
 
    if ( INVALID_HANDLE_VALUE == hfile )
    {
-      int numChars = GetTempPathW( 0, NULL );
-
-      std::vector<WCHAR> szTempDir( numChars );
-
-      if ( GetTempPathW( numChars, &szTempDir[0] ) != ( numChars - 1 ) )
-      {
-         return L"";
-      }
-
-      WCHAR szTempFileName[MAX_PATH+1];
-
-      GetTempFileNameW( &szTempDir[0], L"FUZ", 0, szTempFileName );
-
-      hfile = CreateFileW( szTempFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
-
-      if ( INVALID_HANDLE_VALUE == hfile )
-      {
-         return L"";
-      }
-
-      strFilePath = szTempFileName;
-   }
-   else
-   {
-      strFilePath = szDefaultPath;
+      return L"";
    }
 
    DWORD dwBytesWritten = 0;
@@ -536,7 +535,7 @@ std::wstring GetDefaultXMLFile( LPCWSTR szDefaultPath )
 
    CloseHandle( hfile );
 
-   return strFilePath;
+   return szDefaultPath;
 }
 
 
@@ -603,7 +602,10 @@ std::wstring GetArgPath()
 
    if ( argsCount > 1 )
    {
-      path = szArgList[1];
+      if ( FileExists( szArgList[1] ) )
+      {
+         path = szArgList[1];
+      }
    }
 
    LocalFree( szArgList );
@@ -628,9 +630,57 @@ std::wstring GetXMLPath()
 }
 
 
-void ReplaceXMLFile( LPCWSTR newPath )
+bool ReplaceXMLFile( LPCWSTR newPath )
 {
+   std::wstring error;
+
+   // Validate XML by loading it
+   //
+   if ( !g_xmlHelper.LoadFile( newPath, error ) )
+   {
+      WriteLog( error.c_str() );
+      return false;
+   }
+
    std::wstring existingPath = GetXMLPath();
 
-   CopyFileW( newPath, existingPath.c_str(), FALSE );
+   return ( CopyFileW( newPath, existingPath.c_str(), FALSE ) != 0 );
+}
+
+
+bool FileExists( LPCWSTR path )
+{
+   WIN32_FIND_DATAW findFileData;
+
+   HANDLE hFind = FindFirstFileW( path, &findFileData );
+
+   bool exists = false;
+   
+   if ( INVALID_HANDLE_VALUE != hFind )
+   {
+      exists = true;
+      FindClose( hFind );
+   }
+
+   return exists;
+}
+
+
+void WriteLog( LPCWSTR output )
+{
+   WCHAR logpath[MAX_PATH];
+   wcscpy_s( logpath, MAX_PATH, GetAppDataPath().c_str() );
+
+   PathAppendW( logpath, L"FuzzyClock.log" );
+
+   try
+   {
+      std::wofstream logstream( logpath, std::ios::app );
+      logstream << output << std::endl;
+      logstream << L"GetLastError() returns " << GetLastError() << L"." << std::endl;
+   }
+   catch (...)
+   {
+
+   }
 }

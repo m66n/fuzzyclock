@@ -1,4 +1,4 @@
-// Copyright (c) 2007 Michael Chapman
+// Copyright (c) 2009 Michael Chapman (http://fuzzyclock.googlecode.com)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -35,7 +35,7 @@ public:
    XMLHelper();
    ~XMLHelper();
 
-   bool LoadFile( LPCWSTR szFileName );
+   bool LoadFile( LPCWSTR szFileName, std::wstring& error );
 
    const std::wstring& GetApplicationName() const { return applicationName_; }
    const std::wstring& GetExitText() const { return exitText_; }
@@ -54,8 +54,10 @@ private:
    bool ParseTimesText( MSXML::IXMLDOMNodePtr pNode );
    bool ParseTimeText( MSXML::IXMLDOMNodePtr pNode );
 
+   typedef std::vector< std::wstring > strings;
+
    std::wstring applicationName_;
    std::wstring exitText_;
-   std::vector<std::wstring> hoursText_;
-   std::vector<std::wstring> timesText_;
+   strings hoursText_;
+   strings timesText_;
 };

@@ -3,6 +3,20 @@ FuzzyClock 1.4.1 (revision 43) 11 May 2009
 http://fuzzyclock.googlecode.com
 
 
+Requirements
+
+FuzzyClock is built with Visual Studio 2005 SP1 and requires that
+"Microsoft Visual C++ 2005 SP1 Redistributable Package (x86)" be
+installed.
+
+FuzzyClock (x64) is built with Visual Studio 2008 SP1 and requires that
+"Microsoft Visual C++ 2008 SP1 Redistributable Package (x64)" be
+installed.
+
+If a configuration error dialog is displayed when launching FuzzyClock,
+install the corresponding redistributable package.
+
+
 Installation
 
 1. Extract FuzzyClock.zip to a folder of your choosing (i.e. C:\Program
@@ -38,7 +52,7 @@ times.
 
 
 
-Copyright (c) 2009 Michael Chapman
+Copyright (c) 2009 Michael Chapman (http://fuzzyclock.googlecode.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the

@@ -89,8 +89,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,4,1,44
- PRODUCTVERSION 1,4,1,44
+ FILEVERSION 1,4,1,49
+ PRODUCTVERSION 1,4,1,49
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -107,12 +107,12 @@ BEGIN
         BEGIN
             VALUE "Comments", "fuzzyclock.googlecode.com"
             VALUE "FileDescription", "FuzzyClock Application"
-            VALUE "FileVersion", "1.4.1.44"
+            VALUE "FileVersion", "1.4.1.49"
             VALUE "InternalName", "FuzzyClock"
             VALUE "LegalCopyright", "Copyright (c) 2009 Michael Chapman"
             VALUE "OriginalFilename", "FuzzyClock.exe"
             VALUE "ProductName", "FuzzyClock Application"
-            VALUE "ProductVersion", "1.4.1.44"
+            VALUE "ProductVersion", "1.4.1.49"
         END
     END
     BLOCK "VarFileInfo"

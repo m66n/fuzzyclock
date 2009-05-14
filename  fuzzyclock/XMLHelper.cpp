@@ -1,4 +1,4 @@
-// Copyright (c) 2007 Michael Chapman
+// Copyright (c) 2009 Michael Chapman (http://fuzzyclock.googlecode.com)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -44,7 +44,7 @@ XMLHelper::~XMLHelper()
 }
 
 
-bool XMLHelper::LoadFile( LPCWSTR szFileName )
+bool XMLHelper::LoadFile( LPCWSTR szFileName, std::wstring& error )
 {
    CoInitializeHelper helper;
 
@@ -64,6 +64,7 @@ bool XMLHelper::LoadFile( LPCWSTR szFileName )
 
          if ( !ParseApplicationName( pNode ) )
          {
+            error = L"ParseApplicationName() failed.";
             return false;
          }
 
@@ -71,28 +72,54 @@ bool XMLHelper::LoadFile( LPCWSTR szFileName )
 
          if ( !ParseExitText( pNode ) )
          {
+            error = L"ParseExitText() failed.";
             return false;
          }
+
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//hours_text" );
 
          if ( !ParseHoursText( pNode ) )
          {
-           return false;
+            error = L"ParseHoursText() failed.";
+            return false;
          }
 
          pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//times_text" );
 
-         return ParseTimesText( pNode );
+         if ( !ParseTimesText( pNode ) )
+         {
+            error = L"ParseTimesText() failed.";
+            return false;
+         }
+
+         for ( strings::iterator iter = hoursText_.begin(); iter != hoursText_.end(); ++iter )
+         {
+            if ( (*iter).empty() )
+            {
+               error = L"Localization file is incomplete.  At least one <hour_text> is missing or empty.";
+               return false;
+            }
+         }
+
+         for ( strings::iterator iter = timesText_.begin(); iter != timesText_.end(); ++iter )
+         {
+            if ( (*iter).empty() )
+            {
+               error = L"Localization file is incomplete.  At least one <time_text> is missing or empty.";
+               return false;
+            }
+         }
+
+         return true;
       }
       else
       {
-         // put an error somewhere?  the event log?
+         error = L"Unable to load localization file.";
       }
    }
    catch ( _com_error& e )
    {
-      // put an error somewhere?
-      UNREFERENCED_PARAMETER( e );
+      error = e.Description();
    }
 
    return false;
