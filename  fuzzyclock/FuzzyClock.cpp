@@ -136,7 +136,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
 
    if ( xmlFile.empty() )
    {
-      WriteLog( L"IGetXMLFile() failed." );
+      WriteLog( L"GetXMLFile() failed." );
       return FALSE;
    }
 
@@ -675,7 +675,7 @@ void WriteLog( LPCWSTR output )
 
    try
    {
-      std::wofstream logstream( logpath, std::ios::app );
+      std::wofstream logstream( logpath, std::ios::trunc );
       logstream << output << std::endl;
       logstream << L"GetLastError() returns " << GetLastError() << L"." << std::endl;
    }
