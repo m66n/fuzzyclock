@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#import <msxml.dll>
+#import <msxml3.dll>
 
 
 class XMLHelper
@@ -47,12 +47,12 @@ public:
 
 private:
 
-   bool ParseApplicationName( MSXML::IXMLDOMNodePtr pNode );
-   bool ParseExitText( MSXML::IXMLDOMNodePtr pNode );
-   bool ParseHoursText( MSXML::IXMLDOMNodePtr pNode );
-   bool ParseHourText( MSXML::IXMLDOMNodePtr pNode );
-   bool ParseTimesText( MSXML::IXMLDOMNodePtr pNode );
-   bool ParseTimeText( MSXML::IXMLDOMNodePtr pNode );
+   bool ParseApplicationName( MSXML2::IXMLDOMNodePtr pNode );
+   bool ParseExitText( MSXML2::IXMLDOMNodePtr pNode );
+   bool ParseHoursText( MSXML2::IXMLDOMNodePtr pNode );
+   bool ParseHourText( MSXML2::IXMLDOMNodePtr pNode );
+   bool ParseTimesText( MSXML2::IXMLDOMNodePtr pNode );
+   bool ParseTimeText( MSXML2::IXMLDOMNodePtr pNode );
 
    typedef std::vector< std::wstring > strings;
 

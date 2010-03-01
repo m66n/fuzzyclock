@@ -22,9 +22,9 @@
       <time_text index="2">ten past %0</time_text>
       <time_text index="3">quarter past %0</time_text>
       <time_text index="4">twenty past %0</time_text>
-      <time_text index="5">twenty five past %0</time_text>
+      <time_text index="5">twenty-five past %0</time_text>
       <time_text index="6">half past %0</time_text>
-      <time_text index="7">twenty five to %1</time_text>
+      <time_text index="7">twenty-five to %1</time_text>
       <time_text index="8">twenty to %1</time_text>
       <time_text index="9">quarter to %1</time_text>
       <time_text index="10">ten to %1</time_text>

@@ -206,7 +206,7 @@ ATOM RegisterWindow( HINSTANCE hInstance )
 {
    WNDCLASSEX wcex;
 
-   wcex.cbSize = sizeof(WNDCLASSEX);
+   wcex.cbSize = sizeof(wcex);
 
    wcex.style              = CS_HREDRAW | CS_VREDRAW;
    wcex.lpfnWndProc        = WndProc;
@@ -350,16 +350,16 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 
 BOOL AddTrayIcon( HWND hWnd, LPCWSTR lpszToolTip, HICON hIcon, UINT uID )
 {
-   ZeroMemory( &g_nid, sizeof( NOTIFYICONDATA ) );
+   ZeroMemory( &g_nid, sizeof( g_nid ) );
 
-   g_nid.cbSize = sizeof( NOTIFYICONDATA );
+   g_nid.cbSize = sizeof( g_nid );
    g_nid.hWnd = hWnd;
    g_nid.hIcon = hIcon;
    g_nid.uID = uID;
    g_nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
    g_nid.uCallbackMessage = RWM_TRAYICON;
 
-   wcscpy_s( g_nid.szTip, sizeof( g_nid.szTip ), lpszToolTip );
+   wcscpy_s( g_nid.szTip, _countof( g_nid.szTip ), lpszToolTip );
 
    return Shell_NotifyIconW( NIM_ADD, &g_nid );
 }
@@ -402,7 +402,7 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
          wchar_t buffer[64];
 
          MENUITEMINFOW mii;
-         mii.cbSize = sizeof( MENUITEMINFOW );
+         mii.cbSize = sizeof( mii );
          mii.dwTypeData = buffer;
          mii.cch = 64;
 
@@ -549,7 +549,7 @@ void SetTrayIconText( LPCWSTR szText )
 {
    g_nid.uFlags = NIF_TIP;
 
-   wcscpy_s( g_nid.szTip, sizeof( g_nid.szTip ), szText );
+   wcscpy_s( g_nid.szTip, _countof( g_nid.szTip ), szText );
 
    Shell_NotifyIconW( NIM_MODIFY, &g_nid );
 }
@@ -617,7 +617,7 @@ std::wstring GetArgPath()
 std::wstring GetXMLPath()
 {
    WCHAR szPath[MAX_PATH];
-   
+
    size_t numChars = GetAppDataPath().copy( szPath, MAX_PATH );
 
    szPath[numChars] = L'\0';
@@ -655,7 +655,7 @@ bool FileExists( LPCWSTR path )
    HANDLE hFind = FindFirstFileW( path, &findFileData );
 
    bool exists = false;
-   
+
    if ( INVALID_HANDLE_VALUE != hFind )
    {
       exists = true;

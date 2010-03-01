@@ -23,8 +23,6 @@
 #include "stdafx.h"
 #include "XMLHelper.h"
 
-#import <msxml.dll>
-
 
 class CoInitializeHelper
 {
@@ -50,7 +48,7 @@ bool XMLHelper::LoadFile( LPCWSTR szFileName, std::wstring& error )
 
    try
    {
-      MSXML::IXMLDOMDocumentPtr pDOMDoc( __uuidof( MSXML::DOMDocument ) );
+      MSXML2::IXMLDOMDocumentPtr pDOMDoc( __uuidof( MSXML2::DOMDocument ) );
 
       pDOMDoc->put_async( VARIANT_FALSE );
 
@@ -60,7 +58,7 @@ bool XMLHelper::LoadFile( LPCWSTR szFileName, std::wstring& error )
 
       if ( VARIANT_TRUE == varResult )
       {
-         MSXML::IXMLDOMNodePtr pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//application_name" );
+         MSXML2::IXMLDOMNodePtr pNode = pDOMDoc->selectSingleNode( "//fuzzy_clock//application_name" );
 
          if ( !ParseApplicationName( pNode ) )
          {
@@ -126,11 +124,11 @@ bool XMLHelper::LoadFile( LPCWSTR szFileName, std::wstring& error )
 }
 
 
-bool XMLHelper::ParseApplicationName( MSXML::IXMLDOMNodePtr pNode )
+bool XMLHelper::ParseApplicationName( MSXML2::IXMLDOMNodePtr pNode )
 {
    if ( pNode )
    {
-      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+      MSXML2::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
 
       if ( pChildren )
       {
@@ -153,11 +151,11 @@ bool XMLHelper::ParseApplicationName( MSXML::IXMLDOMNodePtr pNode )
 }
 
 
-bool XMLHelper::ParseExitText( MSXML::IXMLDOMNodePtr pNode )
+bool XMLHelper::ParseExitText( MSXML2::IXMLDOMNodePtr pNode )
 {
    if ( pNode )
    {
-      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+      MSXML2::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
 
       if ( pChildren )
       {
@@ -180,17 +178,17 @@ bool XMLHelper::ParseExitText( MSXML::IXMLDOMNodePtr pNode )
 }
 
 
-bool XMLHelper::ParseHourText( MSXML::IXMLDOMNodePtr pNode )
+bool XMLHelper::ParseHourText( MSXML2::IXMLDOMNodePtr pNode )
 {
    int index = -1;
 
    if ( pNode )
    {
-      MSXML::IXMLDOMNamedNodeMapPtr pAttrMap = pNode->Getattributes();
+      MSXML2::IXMLDOMNamedNodeMapPtr pAttrMap = pNode->Getattributes();
 
       if ( NULL != pAttrMap )
       {
-         MSXML::IXMLDOMAttributePtr pAttribute;
+         MSXML2::IXMLDOMAttributePtr pAttribute;
          while ( pAttribute = pAttrMap->nextNode() )
          {
             if ( pAttribute->Getname() == _bstr_t( "index" ) )
@@ -205,7 +203,7 @@ bool XMLHelper::ParseHourText( MSXML::IXMLDOMNodePtr pNode )
          }
       }
 
-      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+      MSXML2::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
 
       if ( pChildren )
       {
@@ -231,7 +229,7 @@ bool XMLHelper::ParseHourText( MSXML::IXMLDOMNodePtr pNode )
 }
 
 
-bool XMLHelper::ParseHoursText( MSXML::IXMLDOMNodePtr pNode )
+bool XMLHelper::ParseHoursText( MSXML2::IXMLDOMNodePtr pNode )
 {
    hoursText_.clear();
 
@@ -239,7 +237,7 @@ bool XMLHelper::ParseHoursText( MSXML::IXMLDOMNodePtr pNode )
 
    if ( pNode )
    {
-      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+      MSXML2::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
 
       if ( pChildren )
       {
@@ -259,17 +257,17 @@ bool XMLHelper::ParseHoursText( MSXML::IXMLDOMNodePtr pNode )
 }
 
 
-bool XMLHelper::ParseTimeText( MSXML::IXMLDOMNodePtr pNode )
+bool XMLHelper::ParseTimeText( MSXML2::IXMLDOMNodePtr pNode )
 {
    int index = -1;
 
    if ( pNode )
    {
-      MSXML::IXMLDOMNamedNodeMapPtr pAttrMap = pNode->Getattributes();
+      MSXML2::IXMLDOMNamedNodeMapPtr pAttrMap = pNode->Getattributes();
 
       if ( NULL != pAttrMap )
       {
-         MSXML::IXMLDOMAttributePtr pAttribute;
+         MSXML2::IXMLDOMAttributePtr pAttribute;
          while ( pAttribute = pAttrMap->nextNode() )
          {
             if ( pAttribute->Getname() == _bstr_t( "index" ) )
@@ -284,7 +282,7 @@ bool XMLHelper::ParseTimeText( MSXML::IXMLDOMNodePtr pNode )
          }
       }
 
-      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+      MSXML2::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
 
       if ( pChildren )
       {
@@ -311,7 +309,7 @@ bool XMLHelper::ParseTimeText( MSXML::IXMLDOMNodePtr pNode )
 }
 
 
-bool XMLHelper::ParseTimesText( MSXML::IXMLDOMNodePtr pNode )
+bool XMLHelper::ParseTimesText( MSXML2::IXMLDOMNodePtr pNode )
 {
    timesText_.clear();
 
@@ -319,7 +317,7 @@ bool XMLHelper::ParseTimesText( MSXML::IXMLDOMNodePtr pNode )
 
    if ( pNode )
    {
-      MSXML::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
+      MSXML2::IXMLDOMNodeListPtr pChildren = pNode->GetchildNodes();
 
       if ( pChildren )
       {
