@@ -73,11 +73,12 @@ void CopyParentSurface( HWND, HDC, int, int, int, int, int, int );
 bool CreateClockHDC( HWND );
 bool CreateMemoryDC( HDC, HDC&, HBITMAP&, int, int );
 void DrawFuzzyClock( HWND, HDC );
-int GetFuzzyTime( std::wstring& );
+void GetDate( const SYSTEMTIME&, std::wstring& );
+int GetFuzzyTime( const SYSTEMTIME&, std::wstring& );
 int GetFuzzyTimeSector( const SYSTEMTIME& );
 void GetTextSize( HDC, LPCWSTR, TEXTMETRIC&, SIZE& );
 void GetThemeSettings( COLORREF&, HFONT& );
-void GetPreciseTime( std::wstring& );
+void GetPreciseTime( const SYSTEMTIME&, std::wstring& );
 LRESULT _stdcall HookProc( int, WPARAM, LPARAM );
 LRESULT CALLBACK NewWndProc( HWND, UINT, WPARAM, LPARAM );
 LRESULT OnMouseDown( HWND, UINT, WPARAM, LPARAM );
@@ -293,6 +294,9 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
    case WM_TIMER:
 
+      SYSTEMTIME systemTime;
+      GetLocalTime( &systemTime );
+
       switch ( wParam )
       {
       case 0:
@@ -300,24 +304,20 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
       case TIMER_ID_FUZZY:
          
+         if ( GetFuzzyTimeSector( systemTime ) == g_sector )
          {
-            SYSTEMTIME systemTime;
-            GetLocalTime( &systemTime );
-
-            if ( GetFuzzyTimeSector( systemTime ) == g_sector )
-            {
-               return 0;
-            }
-
-            g_sector = GetFuzzyTime( g_strTime );
+            return 0;
          }
+
+         g_sector = GetFuzzyTime( systemTime, g_strTime );
 
          break;
 
       case TIMER_ID_PRECISE:
 
          std::wstring temp( g_strTime );
-         GetPreciseTime( g_strTime );
+
+         GetPreciseTime( systemTime, g_strTime );
 
          if ( temp == g_strTime )
          {
@@ -678,20 +678,20 @@ void GetThemeSettings( COLORREF& clr, HFONT& hFont )
       ncm.cbSize = sizeof( ncm );
       SystemParametersInfo( SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0 );
       ncm.lfCaptionFont.lfWeight = FW_NORMAL;
-      hFont = CreateFontIndirect( &(ncm.lfCaptionFont) );
+      hFont = CreateFontIndirect( &ncm.lfCaptionFont );
    }
 }
 
 
-void GetPreciseTime( std::wstring& strTime )
+void GetPreciseTime( const SYSTEMTIME& systemTime, std::wstring& strTime )
 {
-   int numChars = GetTimeFormatW( NULL, 0, NULL, NULL, NULL, 0 );
+   int numChars = GetTimeFormatW( LOCALE_USER_DEFAULT, 0, &systemTime, NULL, NULL, 0 );
 
    std::vector<WCHAR> buffer( numChars );
 
-   int result = GetTimeFormatW( NULL, 0, NULL, NULL, &(buffer[0]), numChars );
+   int result = GetTimeFormatW( LOCALE_USER_DEFAULT, 0, &systemTime, NULL, &buffer[0], numChars );
 
-   strTime = &(buffer[0]);
+   strTime = &buffer[0];
 }
 
 
@@ -710,11 +710,8 @@ int GetFuzzyTimeSector( const SYSTEMTIME& systemTime )
 }
 
 
-int GetFuzzyTime( std::wstring& strFuzzyTime )
+int GetFuzzyTime( const SYSTEMTIME& systemTime, std::wstring& strFuzzyTime )
 {
-   SYSTEMTIME systemTime;
-   GetLocalTime( &systemTime );
-
    int sector = GetFuzzyTimeSector( systemTime );
 
    std::wstring timeString( &g_szTimesText[sector * TT_STRING_SIZE] );
@@ -763,12 +760,33 @@ int GetFuzzyTime( std::wstring& strFuzzyTime )
 
 void SetTime()
 {
+   SYSTEMTIME systemTime;
+   GetLocalTime( &systemTime );
+
    if ( g_bShowFuzzy )
    {
-      g_sector = GetFuzzyTime( g_strTime );
+      g_sector = GetFuzzyTime( systemTime, g_strTime );
    }
    else
    {
-      GetPreciseTime( g_strTime );
+      GetPreciseTime( systemTime, g_strTime );
    }
+}
+
+
+bool IsMultiLine()
+{
+   return false;
+}
+
+
+void GetDate( const SYSTEMTIME& systemTime, std::wstring& strDate )
+{
+   int numChars = GetDateFormatW( LOCALE_USER_DEFAULT, 0, &systemTime, NULL, NULL, 0 );
+
+   std::vector< WCHAR > buffer( numChars );
+
+   int result = GetDateFormatW( LOCALE_USER_DEFAULT, 0, &systemTime, NULL, &buffer[0], numChars );
+
+   strDate = &buffer[0];
 }
