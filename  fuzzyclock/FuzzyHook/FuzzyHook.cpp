@@ -674,11 +674,17 @@ void GetThemeSettings( COLORREF& clr, HFONT& hFont )
 
    if ( NULL == hFont )
    {
-      NONCLIENTMETRICS ncm;
-      ncm.cbSize = sizeof( ncm );
-      SystemParametersInfo( SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0 );
-      ncm.lfCaptionFont.lfWeight = FW_NORMAL;
-      hFont = CreateFontIndirect( &ncm.lfCaptionFont );
+      //NONCLIENTMETRICS ncm;
+      //ncm.cbSize = sizeof( ncm );
+      //SystemParametersInfo( SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0 );
+      //ncm.lfCaptionFont.lfWeight = FW_NORMAL;
+      //hFont = CreateFontIndirect( &ncm.lfCaptionFont );
+
+      // This is based on AtlCreateControlFont() in WTL
+      //
+      LOGFONT lf = { 0 };
+      SystemParametersInfo( SPI_GETICONTITLELOGFONT, sizeof( lf ), &lf, 0 );
+      hFont = CreateFontIndirect( &lf );
    }
 }
 
