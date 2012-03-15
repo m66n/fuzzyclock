@@ -1,4 +1,5 @@
-// Copyright (c) 2007 Michael Chapman
+// Copyright (c) 2007-2012  Michael Chapman
+// http://fuzzyclock.googlecode.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -205,7 +206,7 @@ LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
 
             if ( LoadLibrary( dllPath ) )
             {
-               g_wndProcOld = (WNDPROC)(intptr_t)SetWindowLong( g_hWnd, GWL_WNDPROC, (long)(intptr_t)NewWndProc );
+               g_wndProcOld = (WNDPROC)SetWindowLongPtr( g_hWnd, GWLP_WNDPROC, (LONG_PTR)NewWndProc );
 
                if ( NULL == g_wndProcOld )
                {
@@ -230,7 +231,7 @@ LRESULT _stdcall HookProc( int code, WPARAM wParam, LPARAM lParam )
 
          UnhookWindowsHookEx( g_hHook );
 
-         if ( SetWindowLong( g_hWnd, GWL_WNDPROC, (long)(intptr_t)g_wndProcOld ) )
+         if ( SetWindowLongPtr( g_hWnd, GWLP_WNDPROC, (LONG_PTR)g_wndProcOld ) )
          {
             Cleanup();
             FreeLibrary( g_hInst );
@@ -295,6 +296,10 @@ LRESULT CALLBACK NewWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
    else if ( RWM_GETFUZZINESS == message )
    {
       return g_level;
+   }
+   else if ( RWM_GETPRECISE == message )
+   {
+      return g_bShowFuzzy ? FALSE : TRUE;
    }
 
    switch ( message )

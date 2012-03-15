@@ -1,27 +1,34 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FuzzyClock", "FuzzyClock.vcproj", "{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}"
-	ProjectSection(ProjectDependencies) = postProject
-		{A8B86777-0442-454E-9DDC-D28FADBDF911} = {A8B86777-0442-454E-9DDC-D28FADBDF911}
-	EndProjectSection
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FuzzyClock", "FuzzyClock.vcxproj", "{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FuzzyHook", "FuzzyHook\FuzzyHook.vcproj", "{A8B86777-0442-454E-9DDC-D28FADBDF911}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FuzzyHook", "FuzzyHook\FuzzyHook.vcxproj", "{A8B86777-0442-454E-9DDC-D28FADBDF911}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
 		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Debug|Win32.ActiveCfg = Debug|Win32
 		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Debug|Win32.Build.0 = Debug|Win32
+		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Debug|x64.ActiveCfg = Debug|x64
+		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Debug|x64.Build.0 = Debug|x64
 		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Release|Win32.ActiveCfg = Release|Win32
 		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Release|Win32.Build.0 = Release|Win32
+		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Release|x64.ActiveCfg = Release|x64
+		{51C9CC3D-589F-4CC2-9F23-DB43B850CECD}.Release|x64.Build.0 = Release|x64
 		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Debug|Win32.ActiveCfg = Debug|Win32
 		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Debug|Win32.Build.0 = Debug|Win32
+		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Debug|x64.ActiveCfg = Debug|x64
+		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Debug|x64.Build.0 = Debug|x64
 		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Release|Win32.ActiveCfg = Release|Win32
 		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Release|Win32.Build.0 = Release|Win32
+		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Release|x64.ActiveCfg = Release|x64
+		{A8B86777-0442-454E-9DDC-D28FADBDF911}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -20,14 +20,33 @@
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 #pragma once
 
-#define NTDDI_VERSION NTDDI_WIN7				
+#include <string>
+#include <boost/utility.hpp>
 
-#include <windows.h>
 
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
+class AutoStart : boost::noncopyable
+{
+public:
+   AutoStart(const wchar_t* shortcutName, const wchar_t* filePath,
+         const wchar_t* workingDir, const wchar_t* description);
+   ~AutoStart();
+
+   void Enable();
+   void Disable();
+   bool IsEnabled() const;
+
+   static std::wstring GetAppPath();
+   static std::wstring GetWorkingDir();
+   static std::wstring GetShortcutPath(const wchar_t* shortcutName);
+
+private:
+   std::wstring filePath_;
+   std::wstring workingDir_;
+   std::wstring description_;
+   std::wstring shortcutPath_;
+
+   static void CheckHR(HRESULT hr, bool throwOnFailure);
+};
+

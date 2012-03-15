@@ -1,4 +1,5 @@
-// Copyright (c) 2007 Michael Chapman
+// Copyright (c) 2007-2012  Michael Chapman
+// http://fuzzyclock.googlecode.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -24,9 +25,12 @@
 #include "resource.h"
 #include "./FuzzyHook/FuzzyHook.h"
 #include "XMLHelper.h"
+#include "AutoStart.h"
+#include "Config.h"
 #include <ShellAPI.h>
 #include <vector>
 #include <string>
+#include <boost/scoped_ptr.hpp>
 
 #ifdef _UNICODE
 typedef std::wstring tstring;
@@ -53,13 +57,23 @@ HICON g_hTrayIcon = NULL;
 
 XMLHelper g_xmlHelper;
 
+boost::scoped_ptr<Config> config_;
+boost::scoped_ptr<AutoStart> autoStart_;
+
 const UINT RWM_IDENTITY = RegisterWindowMessage( _T("RWM_IDENTITY__F4252D21_27F7_4d84_AE3B_48156BC571BC") );
 const UINT RWM_TRAYICON = RegisterWindowMessage( _T("RWM_TRAYICON__C363ED38_3BEA_477b_B407_2A235F89F4E7") );
 
 const UINT RWM_TASKBARCREATED = RegisterWindowMessage( _T("TaskbarCreated") );
 
 
+const wchar_t* APP_NAME = L"FuzzyClock";
+const wchar_t* CONFIG_FILE = L"config";
+const wchar_t* SHORTCUT_NAME = L"FuzzyClock";
+const wchar_t* SHORTCUT_DESC = L"A fuzzy clock (à la KDE) for the Windows tray";
+
+
 BOOL AddTrayIcon( HWND, LPCWSTR, HICON, UINT );
+void ApplyConfig();
 void CALLBACK DelayedSingleClick( HWND, UINT, UINT_PTR, DWORD );
 BOOL CALLBACK EnumWindowsProc( HWND, LPARAM );
 tstring GetDefaultXMLFile( LPCTSTR );
@@ -72,8 +86,9 @@ LRESULT OnTrayIcon( WPARAM, LPARAM );
 BOOL ProcessXMLFile( LPCWSTR );
 ATOM RegisterWindow( HINSTANCE );
 BOOL RemoveTrayIcon();
-LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 void SetTrayIconText( LPCWSTR );
+void ToggleStart();
+LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 
 
 int APIENTRY _tWinMain( HINSTANCE hInstance,
@@ -108,7 +123,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
             cds.cbData = ( (int)wcslen( szArgList[1] ) + 1 ) * sizeof( wchar_t );
             cds.lpData = szArgList[1];
 
-            DWORD result = 0;
+            DWORD_PTR result = 0;
             SendMessageTimeout( hRunning, WM_COPYDATA, 0, (LPARAM)&cds,
                SMTO_BLOCK | SMTO_ABORTIFHUNG, 100, &result );
          }
@@ -129,6 +144,8 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
       return FALSE;
    }
 
+   config_.reset(new Config(APP_NAME, CONFIG_FILE));
+
    tstring xmlFile = GetXMLFile();
 
    if ( xmlFile.empty() )
@@ -142,6 +159,11 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
    }
 
    Hook( GetTrayClock() );
+
+   ApplyConfig();
+
+   autoStart_.reset(new AutoStart(SHORTCUT_NAME, AutoStart::GetAppPath().c_str(),
+         AutoStart::GetWorkingDir().c_str(), SHORTCUT_DESC));
 
    MSG msg;
 
@@ -169,7 +191,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance,
 
 BOOL CALLBACK EnumWindowsProc( HWND hWnd, LPARAM lParam )
 {
-   DWORD result = 0;
+   DWORD_PTR result = 0;
 
    BOOL success = (BOOL)SendMessageTimeout( hWnd, RWM_IDENTITY, 0, 0,
       SMTO_BLOCK | SMTO_ABORTIFHUNG, 100, &result );
@@ -226,6 +248,33 @@ BOOL InitInstance( HINSTANCE hInstance, int nCmdShow )
 }
 
 
+void ApplyConfig()
+{
+   switch (config_->GetFuzziness())
+   {
+   case LOWEST:
+      PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Lowest, 0 );
+      break;
+   case LOWER:
+      PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Lower, 0 );
+      break;
+   case HIGHER:
+      PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Higher, 0 );
+      break;
+   case HIGHEST:
+      PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Highest, 0 );
+      break;
+   }
+
+   if ( config_->GetPrecise() == PRECISE &&
+         SendMessage( GetTrayClock(), RWM_GETPRECISE, 0, 0 ) == FALSE )
+   {
+      PostMessage( GetTrayClock(), RWM_TOGGLE, 0, 0 );
+   }
+
+}
+
+
 BOOL ProcessXMLFile( LPCWSTR szFilePath )
 {
    if ( !g_xmlHelper.LoadFile( szFilePath ) )
@@ -274,24 +323,32 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
             DestroyWindow( hWnd );
             break;
 
+         case IDM_START:
+            ToggleStart();
+            break;
+
          case ID_FUZZINESS_LOWEST:
 
             PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Lowest, 0 );
+            config_->SetFuzziness(LOWEST);
             break;
 
          case ID_FUZZINESS_LOWER:
 
             PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Lower, 0 );
+            config_->SetFuzziness(LOWER);
             break;
 
          case ID_FUZZINESS_HIGHER:
 
             PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Higher, 0 );
+            config_->SetFuzziness(HIGHER);
             break;
 
          case ID_FUZZINESS_HIGHEST:
 
             PostMessage( GetTrayClock(), RWM_SETFUZZINESS, Highest, 0 );
+            config_->SetFuzziness(HIGHEST);
             break;
 
          default:
@@ -374,7 +431,6 @@ BOOL RemoveTrayIcon()
 }
 
 
-
 void SetMenuText( HMENU hMenu, UINT id, LPCWSTR szText, BOOL indexed = FALSE )
 {
    wchar_t buffer[64];
@@ -425,6 +481,13 @@ LRESULT OnTrayIcon( WPARAM wParam, LPARAM lParam )
          SetMenuDefaultItem( hPopupMenu, IDM_EXIT, FALSE );
 
          SetMenuText( hPopupMenu, IDM_EXIT, g_xmlHelper.GetExitText().c_str() );
+
+         SetMenuText( hPopupMenu, IDM_START, g_xmlHelper.GetStartText().c_str() );
+
+         if ( autoStart_->IsEnabled() )
+         {
+            CheckMenuItem( hPopupMenu, IDM_START, MF_CHECKED );
+         }
 
          SetMenuText( hPopupMenu, 0, g_xmlHelper.GetFuzzinessText().c_str(), TRUE );
 
@@ -489,18 +552,7 @@ tstring GetXMLFile()
 {
    WIN32_FIND_DATAW findFileData;
 
-   DWORD numChars = GetCurrentDirectory( 0, NULL );
-
-   std::vector<TCHAR> szDirectory( numChars );
-
-   if ( GetCurrentDirectory( numChars, &szDirectory[0] ) != ( numChars - 1 ) )
-   {
-      return _T("");
-   }
-
-   tstring strDirectory( &szDirectory[0] );
-
-   tstring strFilePath = strDirectory + _T("\\") + _T("FuzzyClock.xml");
+   std::wstring strFilePath = Config::GetConfigPath(APP_NAME, L"FuzzyClock.xml");
 
    HANDLE hFind = FindFirstFile( strFilePath.c_str(), &findFileData );
 
@@ -607,5 +659,26 @@ LRESULT OnTaskbarCreated( WPARAM, LPARAM )
 void CALLBACK DelayedSingleClick( HWND hwnd, UINT, UINT_PTR id, DWORD )
 {
    KillTimer( hwnd, id );
-   PostMessage( GetTrayClock(), RWM_TOGGLE, 0, 0 );
+   SendMessage( GetTrayClock(), RWM_TOGGLE, 0, 0 );
+   if ( SendMessage( GetTrayClock(), RWM_GETPRECISE, 0, 0 ) == TRUE )
+   {
+      config_->SetPrecise(PRECISE);
+   }
+   else
+   {
+      config_->SetPrecise(FUZZY);
+   }
+}
+
+
+void ToggleStart()
+{
+   if ( autoStart_->IsEnabled() )
+   {
+      autoStart_->Disable();
+   }
+   else
+   {
+      autoStart_->Enable();
+   }
 }

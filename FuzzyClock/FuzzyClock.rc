@@ -15,13 +15,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -38,7 +36,7 @@ IDI_SMALL               ICON                    "small.ico"
 // Menu
 //
 
-IDC_FUZZYCLOCK MENU 
+IDC_FUZZYCLOCK MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -46,17 +44,18 @@ BEGIN
     END
 END
 
-IDR_TRAYMENU MENU 
+IDR_TRAYMENU MENU
 BEGIN
     POPUP "_POPUP_"
     BEGIN
         POPUP "Levels"
         BEGIN
-            MENUITEM "0",                       ID_FUZZINESS_LOWEST
-            MENUITEM "1",                       ID_FUZZINESS_LOWER
-            MENUITEM "2",                       ID_FUZZINESS_HIGHER
-            MENUITEM "3",                       ID_FUZZINESS_HIGHEST
+            MENUITEM "0",                           ID_FUZZINESS_LOWEST
+            MENUITEM "1",                           ID_FUZZINESS_LOWER
+            MENUITEM "2",                           ID_FUZZINESS_HIGHER
+            MENUITEM "3",                           ID_FUZZINESS_HIGHEST
         END
+        MENUITEM "Start",                       IDM_START
         MENUITEM "Exit",                        IDM_EXIT
     END
 END
@@ -141,13 +140,13 @@ IDR_XMLDEFAULT          XMLFILE                 "idr_xmldefault.bin"
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "FuzzyClock"
     IDC_FUZZYCLOCK          "FUZZYCLOCK"
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

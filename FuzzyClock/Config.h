@@ -20,14 +20,39 @@
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 #pragma once
 
-#define NTDDI_VERSION NTDDI_WIN7				
+#include <boost/utility.hpp>
+#include <string>
 
-#include <windows.h>
 
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
+typedef enum { LOWEST, LOWER, HIGHER, HIGHEST } FUZZINESS;
+
+typedef enum { FUZZY, PRECISE } PRECISION;
+
+
+class Config : boost::noncopyable
+{
+public:
+   Config(const wchar_t* appName, const wchar_t* fileName);
+   ~Config();
+
+   static std::wstring GetConfigPath(const wchar_t* appName,
+         const wchar_t* fileName);
+
+   int GetFuzziness() const { return fuzziness_; }
+   void SetFuzziness(int fuzziness);
+
+   int GetPrecise() const { return precise_; }
+   void SetPrecise(int precise);
+
+   void Load();
+   void Save();
+
+private:
+   std::wstring path_;
+   bool dirty_;
+   
+   int fuzziness_;
+   int precise_;
+};
