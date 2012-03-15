@@ -2,6 +2,7 @@
 <fuzzy_clock>
    <application_name>FuzzyClock</application_name>
    <exit_text>Exit</exit_text>
+   <start_text>Start with Windows</start_text>
    <fuzziness_text>Fuzziness</fuzziness_text>
    <fuzziness_levels>
       <fuzziness_level index="0">Lowest</fuzziness_level>
